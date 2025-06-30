@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/screens/auth_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -35,8 +36,13 @@ class SplashScreen extends StatelessWidget {
               width: 250, // Fixed width for the button
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to Signup/Login Screen
-                  print('Sign Up pressed');
+                  // Navigate to AuthScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthScreen(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -57,8 +63,13 @@ class SplashScreen extends StatelessWidget {
               width: 250, // Fixed width for the button
               child: OutlinedButton(
                 onPressed: () {
-                  // TODO: Navigate to Login Screen
-                  print('Login pressed');
+                  // Navigate to AuthScreen (both Login and Signup buttons go to the same AuthScreen)
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthScreen(),
+                    ),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -81,7 +92,14 @@ class SplashScreen extends StatelessWidget {
             // Optional "Browse as Guest" button
             TextButton(
               onPressed: () {
-                // TODO: Navigate to Home Screen as guest
+                // TODO: For now, this will also navigate to AuthScreen for simplicity,
+                // but later it will go to the Home Screen (Tenant View) without login.
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthScreen(), // Temporarily
+                    ),
+                  );
                 print('Browse as Guest pressed');
               },
               child: const Text(
