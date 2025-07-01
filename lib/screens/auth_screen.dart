@@ -6,7 +6,6 @@ class AuthScreen extends StatefulWidget {
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
-
 class _AuthScreenState extends State<AuthScreen> {
   // We'll use this to toggle between Login and Signup
   bool _isLogin = true; // true for Login, false for Signup
@@ -289,7 +288,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const Text(' | '),
             TextButton(
               onPressed: () {
-                // TODO: Navigate to Privacy Policy
+                // Todo: Navigate to Privacy Policy
                 print('Privacy Policy');
               },
               child: const Text('Privacy Policy'),
