@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project/screens/splash_screen.dart';  // Adjust path
-import 'package:project/screens/tenant_home_screen.dart'; // Adjust path
-import 'package:project/screens/auth_screen.dart';  // Adjust path
+import 'package:project/screens/splash_screen.dart'; // Import your Splash Screen
 
 void main() {
   runApp(const MyApp());
@@ -15,11 +13,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Project App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        // We can define our primary color here to be used throughout the app
+        primarySwatch: Colors.blue, // A default Material Design color swatch
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), // Using blue as the seed color
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const SplashScreen(), // Set Splash Screen as the initial screen
     );
   }
 }
