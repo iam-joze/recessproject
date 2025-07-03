@@ -18,7 +18,7 @@ class _AuthScreenState extends State<AuthScreen> {
     // Here you would normally validate and authenticate
     // For demo, just navigate to TenantHomeScreen
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const TenantHomeScreen()),
+     MaterialPageRoute(builder: (_) => const TenantHomeScreen()),
     );
   }
 
