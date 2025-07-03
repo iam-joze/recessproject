@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/screens/tenant_profile_setup_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -155,6 +156,7 @@ class _AuthScreenState extends State<AuthScreen> {
           obscureText: true, // Hide password
         ),
         const SizedBox(height: 10),
+        // forgot password
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
@@ -166,6 +168,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
         const SizedBox(height: 30),
+        // Login Button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -174,6 +177,15 @@ class _AuthScreenState extends State<AuthScreen> {
               print('Login button pressed');
               print('Email: ${_emailController.text}');
               print('Password: ${_passwordController.text}');
+
+              // FOR NOW: Assume successful login navigates to TenantProfileSetupScreen
+              // Later, we'll differentiate between tenant/landlord and check profile completion
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TenantProfileSetupScreen(),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
@@ -253,6 +265,7 @@ class _AuthScreenState extends State<AuthScreen> {
           obscureText: true,
         ),
         const SizedBox(height: 30),
+        // Signup button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -263,6 +276,27 @@ class _AuthScreenState extends State<AuthScreen> {
               print('Email: ${_emailController.text}');
               print('Password: ${_passwordController.text}');
               print('Confirm Password: ${_confirmPasswordController.text}');
+
+              // FOR NOW: If it's a Tenant signup, navigate to TenantProfileSetupScreen
+              // Later, Landlords will go to their dashboard, and we'll handle profile completion check
+              if (_isTenant) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TenantProfileSetupScreen(),
+                  ),
+                );
+              } else {
+                // todo: Navigate Landlord to their dashboard (will create later)
+                print('Landlord signed up. Will navigate to Landlord Dashboard soon.');
+                // For now, let's still push them to the tenant setup for demonstration
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TenantProfileSetupScreen(),
+                  )
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
