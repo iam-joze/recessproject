@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/screens/home_screen.dart';
 
 class TenantProfileSetupScreen extends StatefulWidget {
   const TenantProfileSetupScreen({super.key});
@@ -119,7 +120,12 @@ class _TenantProfileSetupScreenState extends State<TenantProfileSetupScreen> {
                   print('Max Rent: $_maxRent');
                   print('Selected Hoouse Types: $_selectedHouseTypes');
                   // Todo: Navigate to home screen (tenant view)
-                  print('Save preferences pressed');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HomeScreen(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 15),
