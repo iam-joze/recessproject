@@ -1,29 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:housingapp/screens/welcome_screen.dart';
-import 'package:housingapp/utils/app_styles.dart'; // Import your app styles
-import 'package:provider/provider.dart';
-import 'package:housingapp/models/user_preferences.dart'; // Import your UserPreferences model
+import 'package:yo_broker/screens/account_screen.dart';
+import 'package:yo_broker/screens/home_screen.dart';
 
 void main() {
-  runApp(
-    // Wrap the entire app with ChangeNotifierProvider
-    ChangeNotifierProvider(
-      create: (context) => UserPreferences(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const YoBrokerApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class YoBrokerApp extends StatelessWidget {
+  const YoBrokerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HousingApp',
-      theme: AppStyles.appTheme(), // Apply your custom theme
-      home: const WelcomeScreen(), // Start with the WelcomeScreen
-      debugShowCheckedModeBanner: false, // Set to false for production
+      title: 'Yo Broker',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.deepPurple,
+        textTheme: Theme.of(context).textTheme.apply(
+              fontFamily: 'Open Sans',
+            ),
+      ),
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/account',
+      routes: {
+        '/account': (context) => const AccountScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
