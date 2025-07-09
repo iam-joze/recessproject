@@ -9,6 +9,7 @@ import '../services/recommendation_service.dart';
 import '../widgets/filter_modal.dart';
 import '../widgets/property_list.dart';
 import 'favorites_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,6 +136,15 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _openFilterModal,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
           ),
         ],
       ),
