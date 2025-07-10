@@ -9,18 +9,17 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:housingapp/algorithms/haversine_formula.dart';
 import 'package:housingapp/algorithms/matching_algorithm.dart';
 import 'package:housingapp/screens/property_detail_screen.dart';
-import 'package:housingapp/widgets/filter_modal.dart'; // New filter modal widget
-// import 'package:housingapp/screens/filter_modal_screen.dart'; // Will create this next
+import 'package:housingapp/widgets/filter_modal.dart';
 
-class DiscoverListingsScreen extends StatefulWidget { // Renamed from ListingsDisplayScreen
+class DiscoverListingsScreen extends StatefulWidget {
   const DiscoverListingsScreen({Key? key}) : super(key: key);
 
   @override
-  State<DiscoverListingsScreen> createState() => _DiscoverListingsScreenState(); // Renamed state class
+  State<DiscoverListingsScreen> createState() => _DiscoverListingsScreenState();
 }
 
-class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Renamed state class
-  List<Property> _displayedProperties = []; // Renamed from _availableProperties for clarity
+class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
+  List<Property> _displayedProperties = [];
   Position? _currentPosition;
   bool _isLoadingLocation = false;
   String? _locationError;
@@ -31,19 +30,22 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
   String? _appliedLocationFilter;
   double? _appliedMinBudget;
   double? _appliedMaxBudget;
-  String? _appliedHouseType;
-  String? _appliedRoomType;
+  String? _appliedHouseType; // Stores permanentHouseType
+  String? _appliedRoomType;   // Stores rentalRoomType
   bool? _appliedSelfContained;
   bool? _appliedFenced;
-  int? _appliedBedrooms; // New filter
-  int? _appliedBathrooms; // New filter
-  int? _appliedMaxGuests; // New filter for Airbnb
-  Map<String, bool> _appliedAmenities = {}; // New filter for Airbnb
+  int? _appliedBedrooms;
+  int? _appliedBathrooms;
+  int? _appliedMaxGuests;
+  Map<String, bool> _appliedAmenities = {};
+
+  // State variable to track if filters have been explicitly applied
+  bool _filtersApplied = false;
 
   @override
   void initState() {
     super.initState();
-    _loadAndFilterProperties(); // Updated method name to reflect broader filtering
+    _loadAndFilterProperties();
   }
 
   // Consolidated method to load, filter, and score properties
@@ -52,79 +54,132 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
     List<Property> allProperties = MockPropertyService.getMockProperties();
     List<Property> currentFilteredProperties = [];
 
-    // --- BASE FILTERING (from initial housing type selection) ---
+    // --- BASE FILTERING (from initial housing type selection - ALWAYS "AND") ---
     currentFilteredProperties = allProperties.where((property) {
       return property.type == userPreferences.housingType;
     }).toList();
 
-    // --- DYNAMIC FILTERING (from filter modal) ---
-    currentFilteredProperties = currentFilteredProperties.where((property) {
-      bool matches = true;
+    // Check if any dynamic filter criteria are actually set.
+    // This is important: if no specific filters are set by the user,
+    // we don't want to apply the complex "at least 2" logic, but simply
+    // return properties filtered only by housingType.
+    bool anySpecificDynamicFilterCriteriaSet =
+        (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty) ||
+        _appliedMinBudget != null ||
+        _appliedMaxBudget != null ||
+        _appliedBedrooms != null ||
+        _appliedBathrooms != null ||
+        (_appliedHouseType != null && _appliedHouseType!.isNotEmpty) ||
+        (_appliedRoomType != null && _appliedRoomType!.isNotEmpty) ||
+        _appliedSelfContained != null ||
+        _appliedFenced != null ||
+        _appliedMaxGuests != null ||
+        _appliedAmenities.isNotEmpty;
 
-      // Filter by dynamic location string
-      if (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty) {
-        if (!property.location.toLowerCase().contains(_appliedLocationFilter!.toLowerCase())) {
-          matches = false;
-        }
-      }
+    // --- DYNAMIC FILTERING (from filter modal - now using "at least 2" logic) ---
+    if (_filtersApplied && anySpecificDynamicFilterCriteriaSet) {
+      currentFilteredProperties = currentFilteredProperties.where((property) {
+        int matchedFilterCount = 0;
+        bool locationFilterAppliedByUser = (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty);
+        bool propertyMatchesLocationFilter = false; // Tracks if this property matches the applied location filter
 
-      // Filter by dynamic budget
-      if (_appliedMinBudget != null && property.price < _appliedMinBudget!) {
-        matches = false;
-      }
-      if (_appliedMaxBudget != null && property.price > _appliedMaxBudget!) {
-        matches = false;
-      }
+        // --- Evaluate each dynamic filter contribution ---
 
-      // Filter by dynamic bedrooms
-      if (_appliedBedrooms != null && property.bedrooms < _appliedBedrooms!) {
-        matches = false;
-      }
+        // 1. Location Filter
+        if (locationFilterAppliedByUser) {
+          if (property.location.toLowerCase().contains(_appliedLocationFilter!.toLowerCase())) {
+            matchedFilterCount++;
+            propertyMatchesLocationFilter = true; // Mark that location matched for this property
+          }
+        }
 
-      // Filter by dynamic bathrooms
-      if (_appliedBathrooms != null && property.bathrooms < _appliedBathrooms!) {
-        matches = false;
-      }
-
-      // Type-specific dynamic filtering
-      if (userPreferences.housingType == 'permanent') {
-        if (_appliedHouseType != null && property.houseType != null &&
-            _appliedHouseType!.toLowerCase() != property.houseType!.toLowerCase()) {
-          matches = false;
-        }
-      } else if (userPreferences.housingType == 'rental') {
-        if (_appliedRoomType != null && property.roomType != null &&
-            _appliedRoomType!.toLowerCase() != property.roomType!.toLowerCase()) {
-          matches = false;
-        }
-        if (_appliedSelfContained != null && property.selfContained != null &&
-            _appliedSelfContained! != property.selfContained!) {
-          matches = false;
-        }
-        if (_appliedFenced != null && property.fenced != null &&
-            _appliedFenced! != property.fenced!) {
-          matches = false;
-        }
-      } else if (userPreferences.housingType == 'airbnb') {
-        if (_appliedMaxGuests != null && property.maxGuests != null &&
-            _appliedMaxGuests! > property.maxGuests!) {
-          matches = false;
-        }
-        // Filter by amenities (ensure all applied amenities are present)
-        if (_appliedAmenities.isNotEmpty) {
-          _appliedAmenities.forEach((amenityKey, isSelected) {
-            if (isSelected && (property.amenities == null || property.amenities![amenityKey] != true)) {
-              matches = false; // Property must have this selected amenity
+        // 2. Budget Filter
+        if (_appliedMinBudget != null || _appliedMaxBudget != null) {
+            bool budgetMeetsCriteria = true;
+            if (_appliedMinBudget != null && property.price < _appliedMinBudget!) {
+                budgetMeetsCriteria = false;
             }
-          });
+            if (_appliedMaxBudget != null && property.price > _appliedMaxBudget!) {
+                budgetMeetsCriteria = false;
+            }
+            if (budgetMeetsCriteria) {
+                matchedFilterCount++;
+            }
         }
-      }
 
-      return matches;
-    }).toList();
+        // 3. Bedrooms Filter
+        if (_appliedBedrooms != null) {
+          if (property.bedrooms >= _appliedBedrooms!) {
+            matchedFilterCount++;
+          }
+        }
+
+        // 4. Bathrooms Filter
+        if (_appliedBathrooms != null) {
+          if (property.bathrooms >= _appliedBathrooms!) {
+            matchedFilterCount++;
+          }
+        }
+
+        // 5. Type-specific dynamic filtering
+        if (userPreferences.housingType == 'permanent') {
+          if (_appliedHouseType != null && property.houseType != null &&
+              _appliedHouseType!.toLowerCase() == property.houseType!.toLowerCase()) {
+            matchedFilterCount++;
+          }
+        } else if (userPreferences.housingType == 'rental') {
+          // Room Type
+          if (_appliedRoomType != null && property.roomType != null &&
+              _appliedRoomType!.toLowerCase() == property.roomType!.toLowerCase()) {
+            matchedFilterCount++;
+          }
+          // Self-contained filter
+          if (_appliedSelfContained != null && property.selfContained != null &&
+              _appliedSelfContained! == property.selfContained!) {
+            matchedFilterCount++;
+          }
+          // Fenced filter
+          if (_appliedFenced != null && property.fenced != null &&
+              _appliedFenced! == property.fenced!) {
+            matchedFilterCount++;
+          }
+        } else if (userPreferences.housingType == 'airbnb') {
+          // Max Guests filter
+          if (_appliedMaxGuests != null && property.maxGuests != null &&
+              property.maxGuests! >= _appliedMaxGuests!) {
+            matchedFilterCount++;
+          }
+          // Amenities filter (counts as 1 match if property has ANY of the selected amenities)
+          if (_appliedAmenities.isNotEmpty) {
+            bool anySelectedAmenityPresentInProperty = false;
+            _appliedAmenities.forEach((amenityKey, isSelected) {
+              if (isSelected && (property.amenities != null && property.amenities![amenityKey] == true)) {
+                anySelectedAmenityPresentInProperty = true;
+              }
+            });
+            if(anySelectedAmenityPresentInProperty) {
+                matchedFilterCount++;
+            }
+          }
+        }
+
+        // --- Final Decision for this property based on "at least 2 filters, location mandatory if specified" ---
+        if (locationFilterAppliedByUser) {
+          // If the user *applied* a location filter, this property MUST match that location filter
+          // AND it must match at least one other dynamic filter (making a total of >= 2 matches).
+          return propertyMatchesLocationFilter && matchedFilterCount >= 2;
+        } else {
+          // If the user did *not* apply a location filter, then the property just needs to match
+          // any two or more dynamic filters.
+          return matchedFilterCount >= 2;
+        }
+      }).toList();
+    }
+    // If _filtersApplied is false OR anySpecificDynamicFilterCriteriaSet is false,
+    // currentFilteredProperties remains filtered only by housingType at this point.
 
 
-    // --- GPS FILTERING (remains the same) ---
+    // --- GPS FILTERING (remains an "AND" condition) ---
     if (_useGPSFilter) {
       await _getCurrentLocation();
       if (_currentPosition != null) {
@@ -143,28 +198,37 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
         }
         currentFilteredProperties = gpsFiltered;
       } else {
-        currentFilteredProperties = [];
+        currentFilteredProperties = []; // If GPS filter is on but location can't be obtained, no properties should show.
       }
     } else {
+      // If GPS filter is off, ensure distanceKm is null for all properties
       for (int i = 0; i < currentFilteredProperties.length; i++) {
         currentFilteredProperties[i] = currentFilteredProperties[i].copyWith(distanceKm: null);
       }
     }
 
-    // --- MATCHING SCORE CALCULATION (remains the same) ---
-    for (int i = 0; i < currentFilteredProperties.length; i++) {
-      double score = MatchingAlgorithm.calculateMatchScore(userPreferences, currentFilteredProperties[i]);
-      currentFilteredProperties[i] = currentFilteredProperties[i].copyWith(matchScore: score);
+    // --- MATCHING SCORE CALCULATION & SORTING ---
+    // This section remains the same, calculating scores for the *already filtered* list
+    // and sorting them if filters were applied.
+    List<Property> propertiesToScoreOrNullify = [];
+    if (_filtersApplied) {
+      for (var property in currentFilteredProperties) {
+        double score = MatchingAlgorithm.calculateMatchScore(userPreferences, property);
+        propertiesToScoreOrNullify.add(property.copyWith(matchScore: score));
+      }
+      propertiesToScoreOrNullify.sort((a, b) => (b.matchScore ?? 0).compareTo(a.matchScore ?? 0));
+    } else {
+      for (var property in currentFilteredProperties) {
+        propertiesToScoreOrNullify.add(property.copyWith(matchScore: null));
+      }
     }
 
-    // Sort properties by match score (descending)
-    currentFilteredProperties.sort((a, b) => (b.matchScore ?? 0).compareTo(a.matchScore ?? 0));
-
-
     setState(() {
-      _displayedProperties = currentFilteredProperties; // Update displayed list
+      _displayedProperties = propertiesToScoreOrNullify;
     });
   }
+
+  // ... (rest of the class, _getCurrentLocation, _showFilterModal, build methods are unchanged) ...
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -219,25 +283,27 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
 
   // Method to show the filter modal
   Future<void> _showFilterModal() async {
+    final userPreferences = Provider.of<UserPreferences>(context, listen: false);
+
     final Map<String, dynamic>? appliedFilters = await showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows the modal to take full height
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return FractionallySizedBox(
-          heightFactor: 0.9, // Adjust height as needed
-          child: FilterModal( // This widget will be created next
+          heightFactor: 0.9,
+          child: FilterModal(
             initialLocation: _appliedLocationFilter,
             initialMinBudget: _appliedMinBudget,
             initialMaxBudget: _appliedMaxBudget,
             initialBedrooms: _appliedBedrooms,
             initialBathrooms: _appliedBathrooms,
-            initialHouseType: _appliedHouseType,
-            initialRoomType: _appliedRoomType,
+            initialPermanentHouseType: _appliedHouseType,
+            initialRentalRoomType: _appliedRoomType,
             initialSelfContained: _appliedSelfContained,
             initialFenced: _appliedFenced,
             initialMaxGuests: _appliedMaxGuests,
             initialAmenities: _appliedAmenities,
-            housingType: Provider.of<UserPreferences>(context, listen: false).housingType!,
+            housingType: userPreferences.housingType!,
           ),
         );
       },
@@ -245,26 +311,56 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
 
     if (appliedFilters != null) {
       setState(() {
+        // 1. Update internal state variables (used for filtering the list)
         _appliedLocationFilter = appliedFilters['location'];
         _appliedMinBudget = appliedFilters['minBudget'];
         _appliedMaxBudget = appliedFilters['maxBudget'];
         _appliedBedrooms = appliedFilters['bedrooms'];
         _appliedBathrooms = appliedFilters['bathrooms'];
-        _appliedHouseType = appliedFilters['houseType'];
-        _appliedRoomType = appliedFilters['roomType'];
+        _appliedHouseType = appliedFilters['permanentHouseType'];
+        _appliedRoomType = appliedFilters['rentalRoomType'];
         _appliedSelfContained = appliedFilters['selfContained'];
         _appliedFenced = appliedFilters['fenced'];
         _appliedMaxGuests = appliedFilters['maxGuests'];
-        _appliedAmenities = appliedFilters['amenities'] ?? {}; // Ensure it's not null
+        _appliedAmenities = appliedFilters['amenities'] ?? {};
+
+        _filtersApplied = true; // Mark filters as applied when modal returns data
       });
+
+      // 2. Update UserPreferences with the applied filters (for MatchingAlgorithm)
+      userPreferences.updateLocation(_appliedLocationFilter);
+      userPreferences.updateBudgetRange(min: _appliedMinBudget, max: _appliedMaxBudget);
+      userPreferences.updateBedrooms(_appliedBedrooms);
+      userPreferences.updateBathrooms(_appliedBathrooms);
+
+      if (userPreferences.housingType == 'permanent') {
+        userPreferences.updateHouseType(_appliedHouseType);
+        userPreferences.updateRentalDetails(roomType: null, selfContained: null, fenced: null);
+        userPreferences.updateAirbnbDetails(checkIn: null, checkOut: null, guests: null, amenities: {});
+      } else if (userPreferences.housingType == 'rental') {
+        userPreferences.updateRentalDetails(
+          roomType: _appliedRoomType,
+          selfContained: _appliedSelfContained,
+          fenced: _appliedFenced,
+        );
+        userPreferences.updateHouseType(null);
+        userPreferences.updateAirbnbDetails(checkIn: null, checkOut: null, guests: null, amenities: {});
+      } else if (userPreferences.housingType == 'airbnb') {
+        userPreferences.updateAirbnbDetails(
+          guests: _appliedMaxGuests,
+          amenities: _appliedAmenities,
+        );
+        userPreferences.updateHouseType(null);
+        userPreferences.updateRentalDetails(roomType: null, selfContained: null, fenced: null);
+      }
+
       _loadAndFilterProperties(); // Re-filter properties with new settings
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final userPreferences = Provider.of<UserPreferences>(context); // Listen to housing type changes if needed elsewhere
+    final userPreferences = Provider.of<UserPreferences>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -273,9 +369,9 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
           // Filter Button
           IconButton(
             icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterModal, // Calls the new filter modal
+            onPressed: _showFilterModal,
           ),
-          // GPS Filter Toggle (moved from previous layout)
+          // GPS Filter Toggle
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -289,21 +385,48 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> { // Re
                   setState(() {
                     _useGPSFilter = value;
                   });
-                  await _loadAndFilterProperties(); // Refetch/refilter/rescore when toggle changes
+                  await _loadAndFilterProperties();
                 },
                 activeColor: Theme.of(context).colorScheme.secondary,
               ),
             ],
           ),
+          // Refresh Button
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadAndFilterProperties,
+            onPressed: () {
+              setState(() {
+                _filtersApplied = false; // Reset filtersApplied to false on refresh
+                // Reset all applied filters to their initial (null/empty) states
+                _appliedLocationFilter = null;
+                _appliedMinBudget = null;
+                _appliedMaxBudget = null;
+                _appliedBedrooms = null;
+                _appliedBathrooms = null;
+                _appliedHouseType = null;
+                _appliedRoomType = null;
+                _appliedSelfContained = null;
+                _appliedFenced = null;
+                _appliedMaxGuests = null;
+                _appliedAmenities = {};
+              });
+
+              // Also clear these preferences in UserPreferences so matching algorithm resets
+              userPreferences.updateLocation(null);
+              userPreferences.updateBudgetRange(min: null, max: null);
+              userPreferences.updateBedrooms(null);
+              userPreferences.updateBathrooms(null);
+              userPreferences.updateHouseType(null);
+              userPreferences.updateRentalDetails(roomType: null, selfContained: null, fenced: null);
+              userPreferences.updateAirbnbDetails(checkIn: null, checkOut: null, guests: null, amenities: {});
+
+              _loadAndFilterProperties();
+            },
           ),
         ],
       ),
       body: Column(
         children: [
-          // Removed redundant GPS filter display from body, it's in AppBar actions now
           if (_isLoadingLocation)
             const Padding(
               padding: EdgeInsets.all(8.0),

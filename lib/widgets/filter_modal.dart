@@ -9,11 +9,11 @@ class FilterModal extends StatefulWidget {
   final double? initialMaxBudget;
   final int? initialBedrooms;
   final int? initialBathrooms;
-  final String? initialHouseType; // For permanent homes
-  final String? initialRoomType; // For rentals
-  final bool? initialSelfContained; // For rentals
-  final bool? initialFenced; // For rentals
-  final int? initialMaxGuests; // For Airbnb
+  final String? initialPermanentHouseType; // Corrected: For permanent homes
+  final String? initialRentalRoomType;     // Corrected: For rentals
+  final bool? initialSelfContained;        // For rentals
+  final bool? initialFenced;               // For rentals
+  final int? initialMaxGuests;             // For Airbnb
   final Map<String, bool> initialAmenities; // For Airbnb
 
   const FilterModal({
@@ -24,8 +24,8 @@ class FilterModal extends StatefulWidget {
     this.initialMaxBudget,
     this.initialBedrooms,
     this.initialBathrooms,
-    this.initialHouseType,
-    this.initialRoomType,
+    this.initialPermanentHouseType, // Corrected parameter name
+    this.initialRentalRoomType,     // Corrected parameter name
     this.initialSelfContained,
     this.initialFenced,
     this.initialMaxGuests,
@@ -43,8 +43,8 @@ class _FilterModalState extends State<FilterModal> {
 
   int? _bedrooms;
   int? _bathrooms;
-  String? _houseType;
-  String? _roomType;
+  String? _houseType; // This will store the value for permanentHouseType
+  String? _roomType;  // This will store the value for rentalRoomType
   bool? _selfContained;
   bool? _fenced;
   int? _maxGuests;
@@ -62,8 +62,8 @@ class _FilterModalState extends State<FilterModal> {
     _maxBudgetController.text = widget.initialMaxBudget?.toString() ?? '';
     _bedrooms = widget.initialBedrooms;
     _bathrooms = widget.initialBathrooms;
-    _houseType = widget.initialHouseType;
-    _roomType = widget.initialRoomType;
+    _houseType = widget.initialPermanentHouseType; // Corrected assignment
+    _roomType = widget.initialRentalRoomType;     // Corrected assignment
     _selfContained = widget.initialSelfContained;
     _fenced = widget.initialFenced;
     _maxGuests = widget.initialMaxGuests;
@@ -85,8 +85,8 @@ class _FilterModalState extends State<FilterModal> {
       'maxBudget': double.tryParse(_maxBudgetController.text),
       'bedrooms': _bedrooms,
       'bathrooms': _bathrooms,
-      'houseType': _houseType,
-      'roomType': _roomType,
+      'permanentHouseType': _houseType, // Corrected: Use specific key for permanent
+      'rentalRoomType': _roomType,     // Corrected: Use specific key for rental
       'selfContained': _selfContained,
       'fenced': _fenced,
       'maxGuests': _maxGuests,
@@ -108,8 +108,8 @@ class _FilterModalState extends State<FilterModal> {
       _maxGuests = null;
       _amenities = {};
     });
-    // Do NOT call _applyFilters here. The user explicitly presses apply.
-    // If you want reset to also apply, call _applyFilters() here.
+    // If you want reset to also apply the cleared filters, uncomment the line below:
+    // _applyFilters();
   }
 
   @override

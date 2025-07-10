@@ -6,18 +6,20 @@ class MatchingAlgorithm {
   /// This version includes more sophisticated logic and weighting.
   static double calculateMatchScore(UserPreferences preferences, Property property) {
     double score = 0;
-    int maxPossibleScore = 0;
+    int maxPossibleScore = 0; // This will dynamically build based on preferences
 
-    // --- Core Match (High Weight) ---
-    // Housing Type (Should already be filtered, but adds to score confirmation)
+    // --- Core Match (High Weight - Always considered) ---
+
+    // Housing Type (Should already be filtered by DiscoverListingsScreen,
+    // but contributes to score if it matches the preference for completeness)
     if (preferences.housingType == property.type) {
-      score += 30; // High weight
+      score += 30;
     }
     maxPossibleScore += 30;
 
     // Location (More nuanced: exact match preferred, otherwise partial)
     if (preferences.location != null && preferences.location!.isNotEmpty) {
-      maxPossibleScore += 25; // Medium-high weight
+      maxPossibleScore += 25;
       if (property.location.toLowerCase() == preferences.location!.toLowerCase()) {
         score += 25; // Exact match
       } else if (property.location.toLowerCase().contains(preferences.location!.toLowerCase())) {
@@ -26,7 +28,7 @@ class MatchingAlgorithm {
     }
 
     // Budget (Penalize heavily if outside bounds)
-    maxPossibleScore += 30; // High weight for budget
+    maxPossibleScore += 30;
     bool budgetMatches = true;
     if (preferences.minBudget != null && property.price < preferences.minBudget!) {
       budgetMatches = false;
@@ -38,79 +40,96 @@ class MatchingAlgorithm {
       score += 30;
     }
 
-    // --- Type-Specific Preferences ---
+    // Bedrooms (General preference: property must have at least the preferred number)
+    if (preferences.bedrooms != null) {
+      maxPossibleScore += 15; // NEW: Added weight for bedrooms
+      if (property.bedrooms >= preferences.bedrooms!) {
+        score += 15;
+      }
+    }
+
+    // Bathrooms (General preference: property must have at least the preferred number)
+    if (preferences.bathrooms != null) {
+      maxPossibleScore += 15; // NEW: Added weight for bathrooms
+      if (property.bathrooms >= preferences.bathrooms!) {
+        score += 15;
+      }
+    }
+
+    // --- Type-Specific Preferences (Conditional Weighting) ---
+    // These only add to maxPossibleScore if the corresponding preference is set.
 
     if (preferences.housingType == 'permanent') {
-      maxPossibleScore += 30; // Combined weight for permanent specific
-      int permScore = 0;
-      // House Type
-      if (preferences.houseType != null && property.houseType != null &&
-          preferences.houseType!.toLowerCase() == property.houseType!.toLowerCase()) {
-        permScore += 20;
+      // House Type (e.g., apartment, bungalow)
+      if (preferences.houseType != null && preferences.houseType!.isNotEmpty) {
+        maxPossibleScore += 20; // Adjusted weight for permanent specific (was 30 with bedrooms)
+        if (property.houseType != null &&
+            preferences.houseType!.toLowerCase() == property.houseType!.toLowerCase()) {
+          score += 20;
+        }
       }
-
-      // Bedrooms (simple check, could be range later)
-      if (property.bedrooms >= 3) { // Assume user prefers more bedrooms for permanent
-          permScore += 10;
-      }
-      score += permScore;
+      // Note: Bedrooms logic for permanent moved to general criteria above.
 
     } else if (preferences.housingType == 'rental') {
-      maxPossibleScore += 40; // Combined weight for rental specific
-      int rentalScore = 0;
       // Room Type
-      if (preferences.roomType != null && property.roomType != null &&
-          preferences.roomType!.toLowerCase() == property.roomType!.toLowerCase()) {
-        rentalScore += 20;
+      if (preferences.roomType != null && preferences.roomType!.isNotEmpty) {
+        maxPossibleScore += 20; // Part of rental specific
+        if (property.roomType != null &&
+            preferences.roomType!.toLowerCase() == property.roomType!.toLowerCase()) {
+          score += 20;
+        }
       }
       // Self-contained
       if (preferences.selfContained != null) {
+        maxPossibleScore += 10; // Part of rental specific
         if (preferences.selfContained! == property.selfContained) {
-          rentalScore += 10;
+          score += 10;
         }
       }
       // Fenced
       if (preferences.fenced != null) {
+        maxPossibleScore += 10; // Part of rental specific
         if (preferences.fenced! == property.fenced) {
-          rentalScore += 10;
+          score += 10;
         }
       }
-      score += rentalScore;
 
     } else if (preferences.housingType == 'airbnb') {
-      maxPossibleScore += 70; // Airbnb has more criteria
-      int airbnbScore = 0;
-
       // Dates Availability (crucial for Airbnb)
-      if (preferences.checkInDate != null && preferences.checkOutDate != null && property.availableDates != null) {
-        bool datesMatch = _checkAirbnbDateAvailability(
-            preferences.checkInDate!, preferences.checkOutDate!, property.availableDates!);
-        if (datesMatch) {
-          airbnbScore += 30; // High weight for date availability
+      if (preferences.checkInDate != null && preferences.checkOutDate != null) {
+        maxPossibleScore += 30; // High weight for date availability
+        if (property.availableDates != null) {
+          bool datesMatch = _checkAirbnbDateAvailability(
+              preferences.checkInDate!, preferences.checkOutDate!, property.availableDates!);
+          if (datesMatch) {
+            score += 30;
+          }
         }
       }
 
-      // Guests Capacity
-      if (preferences.guests != null && property.maxGuests != null &&
-          preferences.guests! <= property.maxGuests!) {
-        airbnbScore += 20; // Medium weight for guest capacity
+      // Guests Capacity (Property must accommodate at least preferred guests)
+      if (preferences.guests != null) {
+        maxPossibleScore += 20; // Medium weight for guest capacity
+        if (property.maxGuests != null && preferences.guests! <= property.maxGuests!) {
+          score += 20;
+        }
       }
 
       // Amenities Match
       if (preferences.airbnbAmenities.isNotEmpty) {
-        int amenityMatches = 0;
         int preferredAmenitiesCount = preferences.airbnbAmenities.values.where((v) => v).length;
         if (preferredAmenitiesCount > 0) {
+          maxPossibleScore += 20; // Max points for amenities
+          int amenityMatches = 0;
           preferences.airbnbAmenities.forEach((key, value) {
             if (value == true && property.amenities != null && property.amenities![key] == true) {
               amenityMatches++;
             }
           });
-          // Proportional score for amenities, caps at 20 points
-          airbnbScore += ((amenityMatches / preferredAmenitiesCount) * 20).toInt();
+          // Proportional score for amenities
+          score += ((amenityMatches / preferredAmenitiesCount) * 20).toInt();
         }
       }
-      score += airbnbScore;
     }
 
     // Normalize score to 100%
@@ -126,12 +145,14 @@ class MatchingAlgorithm {
       DateTime checkIn, DateTime checkOut, List<DateTime> availableDates) {
     if (availableDates.isEmpty) return false;
 
-    // Convert availableDates to a set of DateTimes for quick lookup
+    // Normalize availableDates to start of day for accurate comparison
     Set<DateTime> availableDatesSet = availableDates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
 
-    // Iterate through each day in the requested range (exclusive of check-out day for simplicity)
-    for (DateTime d = checkIn; d.isBefore(checkOut); d = d.add(const Duration(days: 1))) {
-      if (!availableDatesSet.contains(DateTime(d.year, d.month, d.day))) {
+    // Iterate through each day in the requested range (inclusive of check-in, exclusive of check-out)
+    for (DateTime d = DateTime(checkIn.year, checkIn.month, checkIn.day);
+         d.isBefore(DateTime(checkOut.year, checkOut.month, checkOut.day));
+         d = d.add(const Duration(days: 1))) {
+      if (!availableDatesSet.contains(d)) {
         return false; // Not available on this day
       }
     }
