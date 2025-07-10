@@ -1,32 +1,71 @@
+// lib/services/mock_property_service.dart
 import 'package:housingapp/models/property.dart';
-import 'dart:math'; // For random number generation
+import 'dart:math';
 
 class MockPropertyService {
-  static final Random _random = Random();
+  // Use a fixed seed for the Random object to ensure consistent data generation
+  static final Random _random = Random(42); // Fixed seed for reproducibility
   static final List<String> _ugandanLocations = [
     'Kololo', 'Bugolobi', 'Ntinda', 'Muyenga', 'Naalya', 'Kira', 'Makerere', 'Lubaga',
-    'Kawempe', 'Nakawa', 'Munyonyo', 'Kiwatule', 'Gayaza', 'Najjera', 'Kyaliwajjala'
+    'Kawempe', 'Nakawa', 'Munyonyo', 'Kiwatule', 'Gayaza', 'Najjera', 'Kyaliwajjala',
+    'Entebbe', 'Jinja', 'Mbarara', 'Gulu', 'Fort Portal', 'Masaka', 'Mbale'
   ];
 
+  // The static list of properties, initialized once
+  static final List<Property> _staticProperties = _initializeProperties();
+
+  // Public getter to retrieve the static mock properties
   static List<Property> getMockProperties() {
+    return _staticProperties;
+  }
+
+  // Private method to initialize and populate the static properties list
+  static List<Property> _initializeProperties() {
     List<Property> properties = [];
-    for (int i = 0; i < 100; i++) { // Generate 100 properties
-      properties.add(_generateRandomProperty(i));
+    int propertyIndex = 0;
+
+    // Ensure at least 30 permanent homes
+    for (int i = 0; i < 30; i++) {
+      properties.add(_generateRandomProperty(propertyIndex++, 'permanent'));
     }
+    // Ensure at least 30 rental properties
+    for (int i = 0; i < 30; i++) {
+      properties.add(_generateRandomProperty(propertyIndex++, 'rental'));
+    }
+    // Ensure at least 30 Airbnb properties
+    for (int i = 0; i < 30; i++) {
+      properties.add(_generateRandomProperty(propertyIndex++, 'airbnb'));
+    }
+
+    // Generate remaining 10 properties with random types to reach 100
+    for (int i = 0; i < 10; i++) {
+      properties.add(_generateRandomProperty(propertyIndex++, _getRandomHousingType()));
+    }
+
     return properties;
   }
 
-  static Property _generateRandomProperty(int index) {
+  // Helper to generate a single random property
+  static Property _generateRandomProperty(int index, String typeOverride) {
     String id = 'prop_${index + 1}';
-    String type = _getRandomHousingType();
+    String type = typeOverride;
     String location = _ugandanLocations[_random.nextInt(_ugandanLocations.length)];
     double price = _getRandomPrice(type);
     int bedrooms = _random.nextInt(4) + 1; // 1 to 4 bedrooms
     int bathrooms = _random.nextInt(3) + 1; // 1 to 3 bathrooms
     double areaSqFt = _random.nextDouble() * (2500 - 500) + 500; // 500 to 3000 sq ft
-    double latitude = 0.3180 + (_random.nextDouble() * 0.05 * (_random.nextBool() ? 1 : -1)); // Around Kampala
-    double longitude = 32.5825 + (_random.nextDouble() * 0.05 * (_random.nextBool() ? 1 : -1)); // Around Kampala
-    String imageUrl = 'https://picsum.photos/id/${_random.nextInt(1000)}/800/600'; // Random image from Lorem Picsum
+    // Adjusting latitude/longitude to be more centered around Nansana/Kampala area
+    double latitude = 0.3180 + (_random.nextDouble() * 0.05 * (_random.nextBool() ? 1 : -1)); // Around Kampala/Uganda
+    double longitude = 32.5825 + (_random.nextDouble() * 0.05 * (_random.nextBool() ? 1 : -1)); // Around Kampala/Uganda
+
+
+    // Use specific image IDs from picsum.photos that tend to show buildings/interiors
+    // These IDs are also determined by the fixed _random instance
+    int imageId = _random.nextInt(300) + 1; // Use IDs from 1 to 300 for general variety
+    if (index % 5 == 0) imageId = _random.nextInt(50) + 400; // More specific IDs for interiors/exteriors
+    if (index % 7 == 0) imageId = _random.nextInt(50) + 500; // More specific IDs for landscapes/buildings
+
+    String imageUrl = 'https://picsum.photos/id/$imageId/800/600';
     String title = _generateRandomTitle(type, location, bedrooms);
     String description = 'A beautiful ${type} property located in ${location}. Spacious and modern with great amenities.';
 
@@ -38,7 +77,7 @@ class MockPropertyService {
     int? maxGuests;
     List<DateTime>? availableDates;
     Map<String, bool>? amenities;
-    
+
     switch (type) {
       case 'permanent':
         houseType = _getRandomPermanentHouseType();
@@ -87,31 +126,34 @@ class MockPropertyService {
   static double _getRandomPrice(String type) {
     switch (type) {
       case 'permanent':
-        return (_random.nextInt(100) + 50) * 1000000.0; // 50M - 150M+ UGX
+      // UGX 50,000,000 to 1,500,000,000
+        return (_random.nextDouble() * (1500 - 50) + 50) * 1000000.0;
       case 'rental':
-        return (_random.nextInt(20) + 5) * 100000.0; // 500k - 2.5M UGX
+      // UGX 300,000 to 5,000,000 per month
+        return (_random.nextDouble() * (5000 - 300) + 300) * 1000.0;
       case 'airbnb':
-        return (_random.nextInt(100) + 30) * 1000.0; // 30k - 130k UGX per night
+      // UGX 50,000 to 500,000 per night
+        return (_random.nextDouble() * (500 - 50) + 50) * 1000.0;
       default:
         return 1000000.0;
     }
   }
 
   static String _getRandomPermanentHouseType() {
-    final types = ['Bungalow', 'Mansion', 'Apartment', 'Condo', 'Townhouse'];
+    final types = ['Bungalow', 'Mansion', 'Apartment', 'Condo', 'Townhouse', 'Semi-Detached'];
     return types[_random.nextInt(types.length)].toLowerCase();
   }
 
   static String _getRandomRentalRoomType() {
-    final types = ['Single Room', 'Self Contained', 'Shared Apartment', 'Hostel Room'];
+    final types = ['Single Room', 'Self Contained', 'Shared Apartment', 'Hostel Room', 'Bedsitter'];
     return types[_random.nextInt(types.length)].toLowerCase();
   }
 
   static List<DateTime> _generateRandomAvailableDates() {
     List<DateTime> dates = [];
     DateTime now = DateTime.now();
-    for (int i = 0; i < 30; i++) { // Generate availability for the next 30 days
-      if (_random.nextDouble() > 0.3) { // 70% chance of being available
+    for (int i = 0; i < 60; i++) { // Check availability for next 60 days
+      if (_random.nextDouble() > 0.4) { // 60% chance of being available on a given day
         dates.add(now.add(Duration(days: i)));
       }
     }
@@ -119,31 +161,46 @@ class MockPropertyService {
   }
 
   static Map<String, bool> _getRandomAmenities() {
-    final allAmenities = ['WiFi', 'Parking', 'Pool', 'Gym', 'Air Conditioning', 'Kitchen', 'TV', 'Hot Water', 'Balcony'];
+    final allAmenities = [
+      'WiFi', 'Parking', 'Pool', 'Gym', 'Air Conditioning', 'Kitchen', 'TV',
+      'Hot Water', 'Balcony', 'Garden', 'Security', 'Pet-Friendly', 'Washer', 'Dryer'
+    ];
     Map<String, bool> amenities = {};
     for (var amenity in allAmenities) {
       amenities[amenity] = _random.nextBool(); // Randomly include or exclude
     }
-    // Ensure at least a few common ones are true
-    if (_random.nextDouble() < 0.8) amenities['WiFi'] = true;
-    if (_random.nextDouble() < 0.7) amenities['Parking'] = true;
-    if (_random.nextDouble() < 0.6) amenities['Kitchen'] = true;
+    // Ensure some common ones are often true
+    if (_random.nextDouble() < 0.9) amenities['WiFi'] = true;
+    if (_random.nextDouble() < 0.8) amenities['Parking'] = true;
+    if (_random.nextDouble() < 0.7) amenities['Kitchen'] = true;
+    if (_random.nextDouble() < 0.6) amenities['Security'] = true;
     return amenities;
   }
 
   static String _generateRandomTitle(String type, String location, int bedrooms) {
-    String baseTitle = '';
+    String prefix = '';
+    String suffix = '';
+
     switch (type) {
       case 'permanent':
-        baseTitle = 'Spacious ${bedrooms}BR ${location} Home';
+        prefix = 'Luxury';
+        suffix = 'Dream Home';
         break;
       case 'rental':
-        baseTitle = '${bedrooms}BR Rental in ${location}';
+        prefix = 'Comfortable';
+        suffix = 'Rental Unit';
         break;
       case 'airbnb':
-        baseTitle = 'Cozy ${bedrooms}BR Airbnb in ${location}';
+        prefix = 'Charming';
+        suffix = 'Getaway';
         break;
     }
-    return '$baseTitle #${_random.nextInt(999) + 1}'; // Add a random number for uniqueness
+
+    List<String> adjectives = ['Spacious', 'Modern', 'Cozy', 'Elegant', 'Bright', 'Serene', 'Vibrant'];
+    String adjective = adjectives[_random.nextInt(adjectives.length)];
+
+    String bedroomsText = bedrooms == 1 ? '1-Bedroom' : '$bedrooms-Bedroom';
+
+    return '$adjective $bedroomsText $prefix $suffix in $location';
   }
 }
