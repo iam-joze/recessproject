@@ -174,14 +174,14 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                       _buildFeatureRow(Icons.square_foot, '${widget.property.areaSqFt} SqFt'),
                       if (widget.property.type == 'permanent' && widget.property.houseType != null)
                         _buildFeatureRow(Icons.architecture, 'Type: ${widget.property.houseType![0].toUpperCase() + widget.property.houseType!.substring(1)}'),
-                      if (widget.property.type == 'rental' && widget.property.roomType != null)
-                        _buildFeatureRow(Icons.room_preferences, 'Room Type: ${widget.property.roomType![0].toUpperCase() + widget.property.roomType!.substring(1)}'),
+                      // Removed: if (widget.property.type == 'rental' && widget.property.roomType != null)
+                      //   _buildFeatureRow(Icons.room_preferences, 'Room Type: ${widget.property.roomType![0].toUpperCase() + widget.property.roomType!.substring(1)}'),
                       if (widget.property.selfContained == true)
                         _buildFeatureRow(Icons.lock, 'Self-contained'),
                       if (widget.property.fenced == true)
                         _buildFeatureRow(Icons.fence, 'Fenced Compound'),
-                      if (widget.property.type == 'airbnb' && widget.property.maxGuests != null)
-                        _buildFeatureRow(Icons.group, 'Max Guests: ${widget.property.maxGuests}'),
+                      // REMOVED: if (widget.property.type == 'airbnb' && widget.property.maxGuests != null)
+                      //   _buildFeatureRow(Icons.group, 'Max Guests: ${widget.property.maxGuests}'),
 
                       const Divider(height: 32),
 
@@ -300,14 +300,17 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
   // NEW METHOD: Airbnb Booking/Inquiry Dialog
   void _showAirbnbBookingDialog(BuildContext context, Property property) {
-    final userPreferences = Provider.of<UserPreferences>(context, listen: false);
-    final String checkInDateStr = userPreferences.checkInDate != null
-        ? DateFormat('MMM dd, yyyy').format(userPreferences.checkInDate!)
-        : 'Not selected';
-    final String checkOutDateStr = userPreferences.checkOutDate != null
-        ? DateFormat('MMM dd, yyyy').format(userPreferences.checkOutDate!)
-        : 'Not selected';
-    final int guests = userPreferences.guests ?? 1;
+    // Dates for booking would ideally be selected in a dedicated date picker
+    // here, or passed from a prior screen. For this simulation, we'll indicate
+    // they are "Not Selected" as they are no longer in UserPreferences.
+    // The property.availableDates could be used for a more advanced simulation.
+    final String checkInDateStr = 'Not selected (select dates for actual booking)';
+    final String checkOutDateStr = 'Not selected (select dates for actual booking)';
+    
+    // Guests could still be a preference, but for this dialog, we can prompt for it
+    // or use a default. For now, use a default if not explicitly selected elsewhere.
+    // In a real app, this would come from an actual booking form or preferences relevant to booking.
+    final int guests = 1; // Default to 1 guest for simulation
 
     showDialog(
       context: context,
@@ -332,7 +335,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                 Text('Guests: $guests'),
                 const SizedBox(height: 20),
                 Text(
-                    'Note: This is a simulation. Actual booking involves payment and confirmation.',
+                    'Note: This is a simulation. Actual booking involves selecting dates, payment and confirmation.',
                     style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppStyles.darkGrey)),
               ],
             ),

@@ -1,20 +1,30 @@
+// lib/widgets/filter_modal.dart
 import 'package:flutter/material.dart';
 import 'package:housingapp/utils/app_styles.dart';
-import 'package:housingapp/widgets/custom_button.dart'; // Make sure CustomButton is imported
+import 'package:housingapp/widgets/custom_button.dart';
+import 'package:geocoding/geocoding.dart'; // Import for geocoding
+
+// IMPORTANT: Ensure 'geocoding: ^2.0.0' (or latest compatible version)
+// is added to your pubspec.yaml file under dependencies.
 
 class FilterModal extends StatefulWidget {
   final String housingType; // To customize filters based on type
-  final String? initialLocation;
+  final String? initialLocation; // General location filter
   final double? initialMinBudget;
   final double? initialMaxBudget;
   final int? initialBedrooms;
   final int? initialBathrooms;
-  final String? initialPermanentHouseType; // Corrected: For permanent homes
-  final String? initialRentalRoomType;     // Corrected: For rentals
-  final bool? initialSelfContained;        // For rentals
-  final bool? initialFenced;               // For rentals
-  final int? initialMaxGuests;             // For Airbnb
-  final Map<String, bool> initialAmenities; // For Airbnb
+  final String? initialPermanentHouseType;
+  final bool? initialSelfContained;
+  final bool? initialFenced;
+  // REMOVED: final int? initialMaxGuests;
+  final Map<String, bool> initialAmenities;
+
+  // NEW: Initial values for proximity filter
+  final String? initialReferenceLocationText; // Text entered by user
+  final double? initialReferenceLatitude;
+  final double? initialReferenceLongitude;
+  final double? initialRadiusKm;
 
   const FilterModal({
     Key? key,
@@ -24,12 +34,16 @@ class FilterModal extends StatefulWidget {
     this.initialMaxBudget,
     this.initialBedrooms,
     this.initialBathrooms,
-    this.initialPermanentHouseType, // Corrected parameter name
-    this.initialRentalRoomType,     // Corrected parameter name
+    this.initialPermanentHouseType,
     this.initialSelfContained,
     this.initialFenced,
-    this.initialMaxGuests,
+    // REMOVED: this.initialMaxGuests,
     this.initialAmenities = const {},
+    // NEW
+    this.initialReferenceLocationText,
+    this.initialReferenceLatitude,
+    this.initialReferenceLongitude,
+    this.initialRadiusKm,
   }) : super(key: key);
 
   @override
@@ -37,22 +51,28 @@ class FilterModal extends StatefulWidget {
 }
 
 class _FilterModalState extends State<FilterModal> {
-  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController(); // General location filter
   final TextEditingController _minBudgetController = TextEditingController();
   final TextEditingController _maxBudgetController = TextEditingController();
+  
+  // NEW: Proximity filter controllers and state
+  final TextEditingController _referenceLocationController = TextEditingController();
+  double? _radiusKm;
+  double? _geocodedLatitude;
+  double? _geocodedLongitude;
+  bool _isGeocoding = false;
+  String? _geocodingError;
 
   int? _bedrooms;
   int? _bathrooms;
-  String? _houseType; // This will store the value for permanentHouseType
-  String? _roomType;  // This will store the value for rentalRoomType
+  String? _houseType;
   bool? _selfContained;
   bool? _fenced;
-  int? _maxGuests;
+  // REMOVED: int? _maxGuests;
   Map<String, bool> _amenities = {};
 
   final List<String> _houseTypes = ['Bungalow', 'Mansion', 'Apartment', 'Condo', 'Townhouse'];
-  final List<String> _roomTypes = ['Single Room', 'Self Contained', 'Shared Apartment', 'Hostel Room'];
-  final List<String> _allAmenities = ['WiFi', 'Parking', 'Pool', 'Gym', 'Air Conditioning', 'Kitchen', 'TV']; // Common Airbnb amenities
+  final List<String> _allAmenities = ['WiFi', 'Parking', 'Pool', 'Gym', 'Air Conditioning', 'Kitchen', 'TV'];
 
   @override
   void initState() {
@@ -62,12 +82,17 @@ class _FilterModalState extends State<FilterModal> {
     _maxBudgetController.text = widget.initialMaxBudget?.toString() ?? '';
     _bedrooms = widget.initialBedrooms;
     _bathrooms = widget.initialBathrooms;
-    _houseType = widget.initialPermanentHouseType; // Corrected assignment
-    _roomType = widget.initialRentalRoomType;     // Corrected assignment
+    _houseType = widget.initialPermanentHouseType;
     _selfContained = widget.initialSelfContained;
     _fenced = widget.initialFenced;
-    _maxGuests = widget.initialMaxGuests;
-    _amenities = Map.from(widget.initialAmenities); // Copy to be mutable
+    // REMOVED: _maxGuests = widget.initialMaxGuests;
+    _amenities = Map.from(widget.initialAmenities);
+
+    // NEW: Initialize proximity filter state
+    _referenceLocationController.text = widget.initialReferenceLocationText ?? '';
+    _radiusKm = widget.initialRadiusKm;
+    _geocodedLatitude = widget.initialReferenceLatitude;
+    _geocodedLongitude = widget.initialReferenceLongitude;
   }
 
   @override
@@ -75,22 +100,71 @@ class _FilterModalState extends State<FilterModal> {
     _locationController.dispose();
     _minBudgetController.dispose();
     _maxBudgetController.dispose();
+    _referenceLocationController.dispose(); // NEW: Dispose new controller
     super.dispose();
   }
 
-  void _applyFilters() {
+  Future<void> _applyFilters() async {
+    _geocodingError = null; // Clear previous errors
+
+    String? refLocationText = _referenceLocationController.text.trim();
+    double? finalGeocodedLat = _geocodedLatitude;
+    double? finalGeocodedLon = _geocodedLongitude;
+
+    // Only attempt geocoding if a reference location text is provided AND it's different from current geocoded
+    // This prevents re-geocoding if the text hasn't changed and coordinates are already set
+    // Or if initial coords were null and text is now present.
+    if (refLocationText.isNotEmpty && (refLocationText != widget.initialReferenceLocationText || (_geocodedLatitude == null && refLocationText.isNotEmpty))) {
+      setState(() {
+        _isGeocoding = true;
+      });
+      try {
+        List<Location> locations = await locationFromAddress(refLocationText);
+        if (locations.isNotEmpty) {
+          finalGeocodedLat = locations.first.latitude;
+          finalGeocodedLon = locations.first.longitude;
+        } else {
+          _geocodingError = 'Could not find coordinates for "$refLocationText". Please try a different address.';
+          setState(() {
+            _isGeocoding = false;
+          });
+          return; // Stop applying filters if geocoding fails
+        }
+      } catch (e) {
+        _geocodingError = 'Error geocoding address: ${e.toString()}';
+        setState(() {
+          _isGeocoding = false;
+        });
+        return; // Stop applying filters if geocoding fails
+      } finally {
+        setState(() {
+          _isGeocoding = false;
+        });
+      }
+    } else if (refLocationText.isEmpty) {
+      // If reference location text is cleared, clear geocoded coordinates too
+      finalGeocodedLat = null;
+      finalGeocodedLon = null;
+      _radiusKm = null; // Also clear radius if no reference point
+    }
+
+    // Only proceed if no geocoding error or no reference location was provided (or geocoding succeeded)
     Navigator.pop(context, {
       'location': _locationController.text.isNotEmpty ? _locationController.text : null,
       'minBudget': double.tryParse(_minBudgetController.text),
       'maxBudget': double.tryParse(_maxBudgetController.text),
       'bedrooms': _bedrooms,
       'bathrooms': _bathrooms,
-      'permanentHouseType': _houseType, // Corrected: Use specific key for permanent
-      'rentalRoomType': _roomType,     // Corrected: Use specific key for rental
+      'permanentHouseType': _houseType,
       'selfContained': _selfContained,
       'fenced': _fenced,
-      'maxGuests': _maxGuests,
+      // REMOVED: 'maxGuests': _maxGuests,
       'amenities': _amenities,
+      // NEW: Proximity filter results
+      'referenceLocationText': refLocationText.isNotEmpty ? refLocationText : null,
+      'referenceLatitude': finalGeocodedLat,
+      'referenceLongitude': finalGeocodedLon,
+      'radiusKm': _radiusKm,
     });
   }
 
@@ -102,14 +176,19 @@ class _FilterModalState extends State<FilterModal> {
       _bedrooms = null;
       _bathrooms = null;
       _houseType = null;
-      _roomType = null;
       _selfContained = null;
       _fenced = null;
-      _maxGuests = null;
+      // REMOVED: _maxGuests = null;
       _amenities = {};
+
+      // NEW: Reset proximity filter
+      _referenceLocationController.clear();
+      _radiusKm = null;
+      _geocodedLatitude = null;
+      _geocodedLongitude = null;
+      _isGeocoding = false;
+      _geocodingError = null;
     });
-    // If you want reset to also apply the cleared filters, uncomment the line below:
-    // _applyFilters();
   }
 
   @override
@@ -133,7 +212,10 @@ class _FilterModalState extends State<FilterModal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Location', style: Theme.of(context).textTheme.titleMedium),
+            Text('General Filters', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
+
+            Text('Location (General Search)', style: Theme.of(context).textTheme.titleMedium),
             TextField(
               controller: _locationController,
               decoration: const InputDecoration(
@@ -143,6 +225,56 @@ class _FilterModalState extends State<FilterModal> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // NEW: Proximity Filter Section
+            Text('Proximity Filter', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
+            Text('Reference Point (Address)', style: Theme.of(context).textTheme.titleMedium),
+            TextField(
+              controller: _referenceLocationController,
+              decoration: const InputDecoration(
+                hintText: 'e.g., Makerere University, Kampala',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+            if (_isGeocoding)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: LinearProgressIndicator(),
+              ),
+            if (_geocodingError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  _geocodingError!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 16),
+
+            Text('Radius (km)', style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: _radiusKm ?? 0, // Default to 0 if null, will be set once user interacts
+                    min: 0,
+                    max: 50, // Max radius of 50 km
+                    divisions: 10, // 0, 5, 10, 15, ..., 50
+                    label: _radiusKm == null ? 'Any' : '${_radiusKm!.round()} km',
+                    onChanged: (value) {
+                      setState(() {
+                        _radiusKm = value;
+                      });
+                    },
+                  ),
+                ),
+                Text(_radiusKm == null ? 'Any' : '${_radiusKm!.round()} km', style: Theme.of(context).textTheme.bodyLarge),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // End of Proximity Filter Section
 
             Text('Budget Range (UGX)', style: Theme.of(context).textTheme.titleMedium),
             Row(
@@ -239,24 +371,6 @@ class _FilterModalState extends State<FilterModal> {
             ],
 
             if (widget.housingType == 'rental') ...[
-              Text('Room Type', style: Theme.of(context).textTheme.titleMedium),
-              DropdownButtonFormField<String>(
-                value: _roomType,
-                hint: const Text('Any'),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Any')),
-                  ..._roomTypes.map((type) => DropdownMenuItem(value: type.toLowerCase(), child: Text(type))),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _roomType = value;
-                  });
-                },
-              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -300,27 +414,7 @@ class _FilterModalState extends State<FilterModal> {
             ],
 
             if (widget.housingType == 'airbnb') ...[
-              Text('Max Guests', style: Theme.of(context).textTheme.titleMedium),
-              DropdownButtonFormField<int>(
-                value: _maxGuests,
-                hint: const Text('Any'),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Any')),
-                  for (int i = 1; i <= 10; i++)
-                    DropdownMenuItem(value: i, child: Text('$i')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _maxGuests = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-
+              // REMOVED: Max Guests section
               Text('Amenities', style: Theme.of(context).textTheme.titleMedium),
               Wrap(
                 spacing: 8.0,
@@ -347,8 +441,8 @@ class _FilterModalState extends State<FilterModal> {
 
             const SizedBox(height: 32),
             CustomButton(
-              text: 'Apply Filters',
-              onPressed: _applyFilters,
+              text: _isGeocoding ? 'Locating...' : 'Apply Filters',
+              onPressed: _isGeocoding ? null : _applyFilters, // Disable button while geocoding
             ),
             const SizedBox(height: 20),
           ],

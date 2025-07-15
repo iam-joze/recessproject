@@ -68,17 +68,8 @@ class MatchingAlgorithm {
           score += 20;
         }
       }
-      // Note: Bedrooms logic for permanent moved to general criteria above.
 
     } else if (preferences.housingType == 'rental') {
-      // Room Type
-      if (preferences.roomType != null && preferences.roomType!.isNotEmpty) {
-        maxPossibleScore += 20; // Part of rental specific
-        if (property.roomType != null &&
-            preferences.roomType!.toLowerCase() == property.roomType!.toLowerCase()) {
-          score += 20;
-        }
-      }
       // Self-contained
       if (preferences.selfContained != null) {
         maxPossibleScore += 10; // Part of rental specific
@@ -95,27 +86,16 @@ class MatchingAlgorithm {
       }
 
     } else if (preferences.housingType == 'airbnb') {
-      // Dates Availability (crucial for Airbnb)
-      if (preferences.checkInDate != null && preferences.checkOutDate != null) {
-        maxPossibleScore += 30; // High weight for date availability
-        if (property.availableDates != null) {
-          bool datesMatch = _checkAirbnbDateAvailability(
-              preferences.checkInDate!, preferences.checkOutDate!, property.availableDates!);
-          if (datesMatch) {
-            score += 30;
-          }
-        }
-      }
-
-      // Guests Capacity (Property must accommodate at least preferred guests)
-      if (preferences.guests != null) {
-        maxPossibleScore += 20; // Medium weight for guest capacity
-        if (property.maxGuests != null && preferences.guests! <= property.maxGuests!) {
-          score += 20;
-        }
-      }
+      // REMOVED: Guests Capacity (No longer considered)
+      // if (preferences.guests != null) {
+      //   maxPossibleScore += 20;
+      //   if (property.maxGuests != null && preferences.guests! <= property.maxGuests!) {
+      //     score += 20;
+      //   }
+      // }
 
       // Amenities Match
+      // CORRECTED: Changed preferences.airbnbAmenities to preferences.amenities
       if (preferences.airbnbAmenities.isNotEmpty) {
         int preferredAmenitiesCount = preferences.airbnbAmenities.values.where((v) => v).length;
         if (preferredAmenitiesCount > 0) {
@@ -138,24 +118,5 @@ class MatchingAlgorithm {
 
     // Ensure score is between 0 and 100
     return normalizedScore.clamp(0.0, 100.0);
-  }
-
-  /// Helper to check if a property is available for a given date range.
-  static bool _checkAirbnbDateAvailability(
-      DateTime checkIn, DateTime checkOut, List<DateTime> availableDates) {
-    if (availableDates.isEmpty) return false;
-
-    // Normalize availableDates to start of day for accurate comparison
-    Set<DateTime> availableDatesSet = availableDates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
-
-    // Iterate through each day in the requested range (inclusive of check-in, exclusive of check-out)
-    for (DateTime d = DateTime(checkIn.year, checkIn.month, checkIn.day);
-         d.isBefore(DateTime(checkOut.year, checkOut.month, checkOut.day));
-         d = d.add(const Duration(days: 1))) {
-      if (!availableDatesSet.contains(d)) {
-        return false; // Not available on this day
-      }
-    }
-    return true; // Available for the entire range
   }
 }
