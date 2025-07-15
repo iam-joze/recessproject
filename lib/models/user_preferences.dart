@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:housingapp/models/property.dart';
+import 'package:housingapp/models/property.dart'; // Although Property model still has roomType, UserPreferences no longer cares about it.
 
 class UserPreferences with ChangeNotifier {
   String? _name;
@@ -17,13 +17,12 @@ class UserPreferences with ChangeNotifier {
   String? _houseType; // apartment, bungalow, etc. (for Permanent Home)
 
   // Rental specific
-  String? _roomType; // e.g., 1-bedroom, 2-bedroom (for Rental)
   bool? _selfContained; // (for Rental)
   bool? _fenced; // (for Rental)
 
   // Airbnb specific
-  DateTime? _checkInDate;
-  DateTime? _checkOutDate;
+  // REMOVED: DateTime? _checkInDate;
+  // REMOVED: DateTime? _checkOutDate;
   int? _guests; // Corresponds to maxGuests in Property for matching
   Map<String, bool> _airbnbAmenities = {}; // e.g., {'kitchen': true, 'wifi': false}
 
@@ -39,11 +38,10 @@ class UserPreferences with ChangeNotifier {
   int? get bedrooms => _bedrooms; // NEW getter
   int? get bathrooms => _bathrooms; // NEW getter
   String? get houseType => _houseType;
-  String? get roomType => _roomType;
   bool? get selfContained => _selfContained;
   bool? get fenced => _fenced;
-  DateTime? get checkInDate => _checkInDate;
-  DateTime? get checkOutDate => _checkOutDate;
+  // REMOVED: DateTime? get checkInDate => _checkInDate;
+  // REMOVED: DateTime? get checkOutDate => _checkOutDate;
   int? get guests => _guests;
   Map<String, bool> get airbnbAmenities => _airbnbAmenities;
   List<String> get savedPropertyIds => List.unmodifiable(_savedPropertyIds);
@@ -64,11 +62,10 @@ class UserPreferences with ChangeNotifier {
     _bedrooms = null; // Clear on type change
     _bathrooms = null; // Clear on type change
     _houseType = null;
-    _roomType = null;
     _selfContained = null;
     _fenced = null;
-    _checkInDate = null;
-    _checkOutDate = null;
+    // REMOVED: _checkInDate = null;
+    // REMOVED: _checkOutDate = null;
     _guests = null;
     _airbnbAmenities = {};
     notifyListeners();
@@ -103,8 +100,7 @@ class UserPreferences with ChangeNotifier {
   }
 
   // For Rental
-  void updateRentalDetails({String? roomType, bool? selfContained, bool? fenced}) {
-    _roomType = roomType; // Directly assign, not ?? _roomType
+  void updateRentalDetails({bool? selfContained, bool? fenced}) {
     _selfContained = selfContained;
     _fenced = fenced;
     notifyListeners();
@@ -112,13 +108,13 @@ class UserPreferences with ChangeNotifier {
 
   // For Airbnb
   void updateAirbnbDetails({
-    DateTime? checkIn,
-    DateTime? checkOut,
+    // REMOVED: DateTime? checkIn,
+    // REMOVED: DateTime? checkOut,
     int? guests,
     Map<String, bool>? amenities,
   }) {
-    _checkInDate = checkIn;
-    _checkOutDate = checkOut;
+    // REMOVED: _checkInDate = checkIn;
+    // REMOVED: _checkOutDate = checkOut;
     _guests = guests;
     _airbnbAmenities = amenities ?? {}; // Directly assign or empty map
     notifyListeners();
@@ -159,11 +155,10 @@ class UserPreferences with ChangeNotifier {
     _bedrooms = null;
     _bathrooms = null;
     _houseType = null;
-    _roomType = null;
     _selfContained = null;
     _fenced = null;
-    _checkInDate = null;
-    _checkOutDate = null;
+    // REMOVED: _checkInDate = null;
+    // REMOVED: _checkOutDate = null;
     _guests = null;
     _airbnbAmenities = {};
     _savedPropertyIds.clear(); // Also clear saved properties on full reset

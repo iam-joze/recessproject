@@ -71,10 +71,9 @@ class MockPropertyService {
 
     // Type-specific details
     String? houseType;
-    String? roomType;
     bool? selfContained;
     bool? fenced;
-    int? maxGuests;
+    // REMOVED: int? maxGuests;
     List<DateTime>? availableDates;
     Map<String, bool>? amenities;
 
@@ -83,12 +82,11 @@ class MockPropertyService {
         houseType = _getRandomPermanentHouseType();
         break;
       case 'rental':
-        roomType = _getRandomRentalRoomType();
         selfContained = _random.nextBool();
         fenced = _random.nextBool();
         break;
       case 'airbnb':
-        maxGuests = _random.nextInt(6) + 1; // 1 to 6 guests
+        // REMOVED: maxGuests = _random.nextInt(6) + 1; // 1 to 6 guests
         availableDates = _generateRandomAvailableDates();
         amenities = _getRandomAmenities();
         break;
@@ -108,10 +106,9 @@ class MockPropertyService {
       longitude: longitude,
       imageUrl: imageUrl,
       houseType: houseType,
-      roomType: roomType,
       selfContained: selfContained,
       fenced: fenced,
-      maxGuests: maxGuests,
+      // REMOVED: maxGuests: maxGuests,
       availableDates: availableDates,
       amenities: amenities,
       // Default nulls for matchScore and distanceKm
@@ -141,11 +138,6 @@ class MockPropertyService {
 
   static String _getRandomPermanentHouseType() {
     final types = ['Bungalow', 'Mansion', 'Apartment', 'Condo', 'Townhouse', 'Semi-Detached'];
-    return types[_random.nextInt(types.length)].toLowerCase();
-  }
-
-  static String _getRandomRentalRoomType() {
-    final types = ['Single Room', 'Self Contained', 'Shared Apartment', 'Hostel Room', 'Bedsitter'];
     return types[_random.nextInt(types.length)].toLowerCase();
   }
 

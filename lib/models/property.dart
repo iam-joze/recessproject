@@ -14,12 +14,11 @@ class Property {
 
   // Type-specific properties
   final String? houseType; // e.g., 'apartment', 'bungalow', 'condo' (for permanent)
-  final String? roomType; // e.g., '1-bedroom', 'studio' (for rental)
   final bool? selfContained; // For rental
   final bool? fenced; // For rental
   final List<DateTime>? availableDates; // For Airbnb
   final Map<String, bool>? amenities; // e.g., {'wifi': true, 'kitchen': true} for Airbnb
-  final int? maxGuests; // For Airbnb
+  // REMOVED: final int? maxGuests; // For Airbnb
 
   // Algorithm specific (will be used later, good to include now)
   int? clusterId; // For K-Means clustering
@@ -40,12 +39,11 @@ class Property {
     required this.bathrooms,
     required this.areaSqFt,
     this.houseType,
-    this.roomType,
     this.selfContained,
     this.fenced,
     this.availableDates,
     this.amenities,
-    this.maxGuests,
+    // REMOVED: this.maxGuests,
     this.clusterId,
     this.matchScore,
     this.distanceKm,
@@ -71,12 +69,11 @@ class Property {
       bathrooms: bathrooms,
       areaSqFt: areaSqFt,
       houseType: houseType,
-      roomType: roomType,
       selfContained: selfContained,
       fenced: fenced,
       availableDates: availableDates,
       amenities: amenities,
-      maxGuests: maxGuests,
+      // REMOVED: maxGuests: maxGuests,
       clusterId: clusterId ?? this.clusterId,
       matchScore: matchScore ?? this.matchScore,
       distanceKm: distanceKm ?? this.distanceKm,
