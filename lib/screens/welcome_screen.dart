@@ -15,10 +15,9 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // You can add an app logo or image here
-              Icon(
-                Icons.home_work,
-                size: 100,
-                color: Theme.of(context).colorScheme.primary,
+              Image.asset(
+                'assets/images/logo.jpeg',
+                height: 150,
               ),
               const SizedBox(height: 32),
               Text(
