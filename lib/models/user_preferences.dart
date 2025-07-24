@@ -1,142 +1,312 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/foundation.dart';
-import 'package:housingapp/models/property.dart'; // Although Property model still has roomType, UserPreferences no longer cares about it.
+import 'package:cloud_firestore/cloud_firestore.dart';
+//import 'package:housingapp/models/property.dart';
 
 class UserPreferences with ChangeNotifier {
+  String? _uid;
   String? _name;
-  String? _phoneNumber;
-  String? _housingType; // permanent, rental, airbnb
+  String? _email;
+  String? _housingType;
 
-  // Common preferences for matching
-  String? _location; // Preferred region/city
+  String? _location;
   double? _minBudget;
   double? _maxBudget;
-  int? _bedrooms; // NEW: Added for general property matching
-  int? _bathrooms; // NEW: Added for general property matching
+  int? _bedrooms;
+  int? _bathrooms;
 
-  // Permanent Home specific
-  String? _houseType; // apartment, bungalow, etc. (for Permanent Home)
+  String? _houseType;
 
-  // Rental specific
-  bool? _selfContained; // (for Rental)
-  bool? _fenced; // (for Rental)
+  bool? _selfContained;
+  bool? _fenced;
 
-  // Airbnb specific
-  // REMOVED: DateTime? _checkInDate;
-  // REMOVED: DateTime? _checkOutDate;
-  int? _guests; // Corresponds to maxGuests in Property for matching
-  Map<String, bool> _airbnbAmenities = {}; // e.g., {'kitchen': true, 'wifi': false}
+  int? _guests;
+  Map<String, bool> _airbnbAmenities = {};
 
-  final List<String> _savedPropertyIds = []; // Store IDs of saved properties
+  final List<String> _savedPropertyIds = [];
+
+  String? _fcmToken;
+
+  // ADD THIS EXPLICIT DEFAULT CONSTRUCTOR
+  UserPreferences(); // This allows UserPreferences() to be called.
 
   // --- Getters ---
+  String? get uid => _uid;
   String? get name => _name;
-  String? get phoneNumber => _phoneNumber;
+  String? get email => _email;
   String? get housingType => _housingType;
   String? get location => _location;
   double? get minBudget => _minBudget;
   double? get maxBudget => _maxBudget;
-  int? get bedrooms => _bedrooms; // NEW getter
-  int? get bathrooms => _bathrooms; // NEW getter
+  int? get bedrooms => _bedrooms;
+  int? get bathrooms => _bathrooms;
   String? get houseType => _houseType;
   bool? get selfContained => _selfContained;
   bool? get fenced => _fenced;
-  // REMOVED: DateTime? get checkInDate => _checkInDate;
-  // REMOVED: DateTime? get checkOutDate => _checkOutDate;
   int? get guests => _guests;
   Map<String, bool> get airbnbAmenities => _airbnbAmenities;
   List<String> get savedPropertyIds => List.unmodifiable(_savedPropertyIds);
+  String? get fcmToken => _fcmToken;
 
-  // --- Setters / Updaters ---
-  void updateUserDetails({required String name, required String phoneNumber}) {
+  // --- Firestore Integration Methods ---
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      if (_fcmToken != null) "fcmToken": _fcmToken,
+      if (_name != null) "name": _name,
+      if (_email != null) "email": _email,
+      if (_housingType != null) "housingType": _housingType,
+      if (_location != null) "location": _location,
+      if (_minBudget != null) "minBudget": _minBudget,
+      if (_maxBudget != null) "maxBudget": _maxBudget,
+      if (_bedrooms != null) "bedrooms": _bedrooms,
+      if (_bathrooms != null) "bathrooms": _bathrooms,
+      if (_houseType != null) "houseType": _houseType,
+      if (_selfContained != null) "selfContained": _selfContained,
+      if (_fenced != null) "fenced": _fenced,
+      if (_guests != null) "guests": _guests,
+      if (_airbnbAmenities.isNotEmpty) "airbnbAmenities": _airbnbAmenities,
+      if (_savedPropertyIds.isNotEmpty) "savedPropertyIds": _savedPropertyIds,
+    };
+  }
+
+  factory UserPreferences.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    final data = snapshot.data();
+    final prefs = UserPreferences(); // This line will now correctly call the explicit default constructor
+
+    prefs._uid = snapshot.id;
+    prefs._name = data?['name'] as String?;
+    prefs._email = data?['email'] as String?;
+    prefs._housingType = data?['housingType'] as String?;
+    prefs._location = data?['location'] as String?;
+    prefs._minBudget = data?['minBudget'] as double?;
+    prefs._maxBudget = data?['maxBudget'] as double?;
+    prefs._bedrooms = data?['bedrooms'] as int?;
+    prefs._bathrooms = data?['bathrooms'] as int?;
+    prefs._houseType = data?['houseType'] as String?;
+    prefs._selfContained = data?['selfContained'] as bool?;
+    prefs._fenced = data?['fenced'] as bool?;
+    prefs._guests = data?['guests'] as int?;
+    if (data?['airbnbAmenities'] is Map) {
+      prefs._airbnbAmenities = Map<String, bool>.from(data!['airbnbAmenities']);
+    }
+    if (data?['savedPropertyIds'] is List) {
+      prefs._savedPropertyIds.addAll(List<String>.from(data!['savedPropertyIds']));
+    }
+    prefs._fcmToken = data?['fcmToken'] as String?;
+    return prefs;
+  }
+
+  // --- Setters / Updaters (Now includes Firestore saving) ---
+
+  Future<void> updateUserDetails({String? uid, required String name, required String email}) async {
+    if (uid == null) {
+      print("Error: UID is required to save user details to Firestore.");
+      return;
+    }
+    _uid = uid;
     _name = name;
-    _phoneNumber = phoneNumber;
+    _email = email;
+
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(_uid);
+    await userDocRef.set({
+      'name': _name,
+      'email': _email,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    notifyListeners();
+  }
+
+  Future<void> updateFcmToken(String? token) async {
+    if (_uid == null) {
+      print("Error: UID is required to update FCM token.");
+      return;
+    }
+    if (_fcmToken == token) {
+      // Token hasn't changed, no need to update Firestore
+      return;
+    }
+
+    _fcmToken = token;
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(_uid);
+    await userDocRef.set({
+      'fcmToken': _fcmToken,
+      'lastTokenUpdated': FieldValue.serverTimestamp(), // Optional timestamp
+    }, SetOptions(merge: true));
+
+    notifyListeners();
+    print("FCM Token updated and saved for user $_uid");
+  }
+
+  Future<void> loadUserDetails(String uid) async {
+    _uid = uid;
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final docSnapshot = await userDocRef.get();
+
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data();
+      if (data != null) {
+        _name = data['name'] as String?;
+        _email = data['email'] as String?;
+        _housingType = data['housingType'] as String?;
+        _location = data['location'] as String?;
+        _minBudget = data['minBudget'] as double?;
+        _maxBudget = data['maxBudget'] as double?;
+        _bedrooms = data['bedrooms'] as int?;
+        _bathrooms = data['bathrooms'] as int?;
+        _houseType = data['houseType'] as String?;
+        _selfContained = data['selfContained'] as bool?;
+        _fenced = data['fenced'] as bool?;
+        _guests = data['guests'] as int?;
+        if (data['airbnbAmenities'] is Map) {
+          _airbnbAmenities = Map<String, bool>.from(data['airbnbAmenities']);
+        }
+        if (data['savedPropertyIds'] is List) {
+          _savedPropertyIds.clear();
+          _savedPropertyIds.addAll(List<String>.from(data['savedPropertyIds']));
+        }
+      }
+    } else {
+      print("User preferences document for $uid does not exist in Firestore.");
+    }
     notifyListeners();
   }
 
   void updateHousingType(String type) {
     _housingType = type;
-    // Clear ALL other type-specific and common preferences when type changes
     _location = null;
     _minBudget = null;
     _maxBudget = null;
-    _bedrooms = null; // Clear on type change
-    _bathrooms = null; // Clear on type change
+    _bedrooms = null;
+    _bathrooms = null;
     _houseType = null;
     _selfContained = null;
     _fenced = null;
-    // REMOVED: _checkInDate = null;
-    // REMOVED: _checkOutDate = null;
     _guests = null;
     _airbnbAmenities = {};
     notifyListeners();
   }
 
-  // Common preference updaters
-  void updateLocation(String? location) { // Made nullable for clearing
+  Future<void> updateLocation(String? location) async {
     _location = location;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'location': _location, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  void updateBudgetRange({double? min, double? max}) {
+  Future<void> updateBudgetRange({double? min, double? max}) async {
     _minBudget = min;
     _maxBudget = max;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'minBudget': _minBudget, 'maxBudget': _maxBudget, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  void updateBedrooms(int? bedrooms) { // NEW updater
+  Future<void> updateBedrooms(int? bedrooms) async {
     _bedrooms = bedrooms;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'bedrooms': _bedrooms, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  void updateBathrooms(int? bathrooms) { // NEW updater
+  Future<void> updateBathrooms(int? bathrooms) async {
     _bathrooms = bathrooms;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'bathrooms': _bathrooms, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  // For Permanent Home
-  void updateHouseType(String? type) { // Made nullable for clearing
+  Future<void> updateHouseType(String? type) async {
     _houseType = type;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'houseType': _houseType, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  // For Rental
-  void updateRentalDetails({bool? selfContained, bool? fenced}) {
+  Future<void> updateRentalDetails({bool? selfContained, bool? fenced}) async {
     _selfContained = selfContained;
     _fenced = fenced;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'selfContained': _selfContained, 'fenced': _fenced, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  // For Airbnb
-  void updateAirbnbDetails({
-    // REMOVED: DateTime? checkIn,
-    // REMOVED: DateTime? checkOut,
+  Future<void> updateAirbnbDetails({
     int? guests,
     Map<String, bool>? amenities,
-  }) {
-    // REMOVED: _checkInDate = checkIn;
-    // REMOVED: _checkOutDate = checkOut;
+  }) async {
     _guests = guests;
-    _airbnbAmenities = amenities ?? {}; // Directly assign or empty map
+    _airbnbAmenities = amenities ?? {};
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set(
+        {'guests': _guests, 'airbnbAmenities': _airbnbAmenities, 'lastUpdated': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    }
     notifyListeners();
   }
 
-  void toggleAirbnbAmenity(String amenityKey, bool value) {
+  Future<void> toggleAirbnbAmenity(String amenityKey, bool value) async {
     _airbnbAmenities[amenityKey] = value;
+    if (_uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).update(
+        {'airbnbAmenities.$amenityKey': value, 'lastUpdated': FieldValue.serverTimestamp()},
+      );
+    }
     notifyListeners();
   }
 
-  void addSavedProperty(String propertyId) {
+  Future<void> addSavedProperty(String propertyId) async {
+    if (_uid == null) return;
     if (!_savedPropertyIds.contains(propertyId)) {
       _savedPropertyIds.add(propertyId);
+      await FirebaseFirestore.instance.collection('users').doc(_uid).update({
+        'savedPropertyIds': FieldValue.arrayUnion([propertyId]),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
       notifyListeners();
-      print('Property $propertyId saved!'); // For debugging
+      print('Property $propertyId saved!');
     }
   }
 
-  void removeSavedProperty(String propertyId) {
+  Future<void> removeSavedProperty(String propertyId) async {
+    if (_uid == null) return;
     if (_savedPropertyIds.remove(propertyId)) {
+      await FirebaseFirestore.instance.collection('users').doc(_uid).update({
+        'savedPropertyIds': FieldValue.arrayRemove([propertyId]),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
       notifyListeners();
-      print('Property $propertyId unsaved!'); // For debugging
+      print('Property $propertyId unsaved!');
     }
   }
 
@@ -144,10 +314,10 @@ class UserPreferences with ChangeNotifier {
     return _savedPropertyIds.contains(propertyId);
   }
 
-  // Reset all preferences (e.g., for logout or starting over)
   void resetPreferences() {
+    _uid = null;
     _name = null;
-    _phoneNumber = null;
+    _email = null;
     _housingType = null;
     _location = null;
     _minBudget = null;
@@ -157,11 +327,10 @@ class UserPreferences with ChangeNotifier {
     _houseType = null;
     _selfContained = null;
     _fenced = null;
-    // REMOVED: _checkInDate = null;
-    // REMOVED: _checkOutDate = null;
     _guests = null;
     _airbnbAmenities = {};
-    _savedPropertyIds.clear(); // Also clear saved properties on full reset
+    _savedPropertyIds.clear();
+    _fcmToken = null;
     notifyListeners();
   }
 }

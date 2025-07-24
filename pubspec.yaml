@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   # State Management
-  provider: ^6.0.5 # Or latest version
+  provider: ^6.1.5 # Or latest version
 
   # Permissions handling (for future use with GPS)
   permission_handler: ^12.0.1 # Or latest version
@@ -40,6 +40,8 @@ dependencies:
   google_fonts: ^6.2.1 # Or latest version
 
   cupertino_icons: ^1.0.6
+  firebase_dynamic_links: ^6.1.10
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
@@ -51,6 +53,13 @@ dev_dependencies:
   geolocator: ^14.0.2 
   uuid: ^4.3.3
   geocoding: ^2.0.1 # For reverse geocoding
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
+  firebase_messaging: ^15.2.10
+  firebase-admin: ^9.0.0 # For Firebase Admin SDK
+  firebase-functions: ^4.0.0 # For Firebase Functions
+  #provider: ^6.1.5
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

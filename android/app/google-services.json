@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "589965549051",
+    "project_id": "housing-app-5a129",
+    "storage_bucket": "housing-app-5a129.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589965549051:android:049c803084b2bf61b27f5e",
+        "android_client_info": {
+          "package_name": "com.example.housingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzLyWJQGtXgbLzYTZPak91KLHaEy-PjCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
