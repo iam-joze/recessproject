@@ -49,7 +49,8 @@ dev_dependencies:
     sdk: flutter
 
   # ... other dependencies
-  intl: ^0.20.2 # For date formatting  
+  intl: ^0.20.2 # For date formatting 
+  logging: ^1.0.0 # For logging 
   geolocator: ^14.0.2 
   uuid: ^4.3.3
   geocoding: ^2.0.1 # For reverse geocoding

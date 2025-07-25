@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:housingapp/models/property.dart';
 import 'package:housingapp/utils/app_styles.dart';
@@ -8,10 +10,10 @@ class ListingCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ListingCard({
-    Key? key,
+    super.key,
     required this.property,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   String _formatPrice(double price, String type) {
     final formatter = NumberFormat.currency(
@@ -121,7 +123,7 @@ class ListingCard extends StatelessWidget {
                           if (property.distanceKm != null)
                             _buildInfoChip(
                               label: '${property.distanceKm!.toStringAsFixed(1)} km away',
-                              color: AppStyles.primaryColor.withOpacity(0.8),
+                              color: AppStyles.primaryColor.withValues(alpha: (0.8 * 255)),
                             ),
                         ],
                       ),

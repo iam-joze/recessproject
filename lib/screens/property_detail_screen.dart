@@ -1,18 +1,18 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:housingapp/models/property.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/user_preferences.dart';
-import 'package:housingapp/widgets/custom_button.dart'; // Ensure CustomButton is imported
-
-// Assuming you have a MockNotificationService for later. Add this import for now.
+import 'package:housingapp/widgets/custom_button.dart'; 
 import 'package:housingapp/services/mock_notification_service.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
 
-  const PropertyDetailScreen({Key? key, required this.property}) : super(key: key);
+  const PropertyDetailScreen({super.key, required this.property});
 
   @override
   State<PropertyDetailScreen> createState() => _PropertyDetailScreenState();
@@ -91,7 +91,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                         Shadow(
                           offset: const Offset(1, 1),
                           blurRadius: 3.0,
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withAlpha((0.5 * 255).toInt()),
                         ),
                       ],
                     ),
@@ -174,14 +174,10 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                       _buildFeatureRow(Icons.square_foot, '${widget.property.areaSqFt} SqFt'),
                       if (widget.property.type == 'permanent' && widget.property.houseType != null)
                         _buildFeatureRow(Icons.architecture, 'Type: ${widget.property.houseType![0].toUpperCase() + widget.property.houseType!.substring(1)}'),
-                      // Removed: if (widget.property.type == 'rental' && widget.property.roomType != null)
-                      //   _buildFeatureRow(Icons.room_preferences, 'Room Type: ${widget.property.roomType![0].toUpperCase() + widget.property.roomType!.substring(1)}'),
                       if (widget.property.selfContained == true)
                         _buildFeatureRow(Icons.lock, 'Self-contained'),
                       if (widget.property.fenced == true)
                         _buildFeatureRow(Icons.fence, 'Fenced Compound'),
-                      // REMOVED: if (widget.property.type == 'airbnb' && widget.property.maxGuests != null)
-                      //   _buildFeatureRow(Icons.group, 'Max Guests: ${widget.property.maxGuests}'),
 
                       const Divider(height: 32),
 
@@ -207,7 +203,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppStyles.accentColor.withOpacity(0.1),
+                            color: AppStyles.accentColor.withAlpha((0.1 * 255).toInt()),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(

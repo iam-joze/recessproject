@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 // Will add Firebase imports later
 
 class OtpScreen extends StatefulWidget {
@@ -26,9 +27,9 @@ class _OtpScreenState extends State<OtpScreen> {
 
   // We'll implement OTP verification logic here in the next step
   void _verifyOtp() {
-    // Placeholder for OTP verification
-    print('Verifying OTP: ${_otpController.text}');
-    print('Verification ID: ${widget.verificationId}');
+    developer.log('Verifying OTP: ${_otpController.text}');
+    developer.log('Verification ID: ${widget.verificationId}');
+    developer.log('Verification ID: ${widget.verificationId}');
     // This is where Firebase signInWithCredential will go
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('OTP verification logic coming soon!')),

@@ -3,7 +3,7 @@ import 'package:housingapp/widgets/custom_button.dart';
 import 'package:housingapp/screens/account_creation_screen.dart'; // Import for navigation
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({Key? key}) : super(key: key);
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,7 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // You can add an app logo or image here
+              // app logo 
               Image.asset(
                 'assets/images/logo.jpeg',
                 height: 150,

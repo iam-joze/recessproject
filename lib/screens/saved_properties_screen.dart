@@ -1,10 +1,12 @@
+// ignore_for_file: null_check_always_fails, unnecessary_null_comparison
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/user_preferences.dart';
 import 'package:housingapp/models/property.dart';
-import 'package:housingapp/services/mock_property_service.dart'; // To fetch property details by ID
+import 'package:housingapp/services/mock_property_service.dart'; 
 import 'package:housingapp/widgets/listing_card.dart';
-import 'package:housingapp/screens/property_detail_screen.dart'; // To navigate to detail view
+import 'package:housingapp/screens/property_detail_screen.dart'; 
 
 class SavedPropertiesScreen extends StatefulWidget {
   const SavedPropertiesScreen({super.key});

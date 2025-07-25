@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import 'dart:developer' as developer;
 import 'package:housingapp/models/user_preferences.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
@@ -16,8 +17,8 @@ import 'package:housingapp/firebase_options.dart';
 
 // --- TOP-LEVEL FUNCTION FOR BACKGROUND MESSAGES (REQUIRED BY FCM) ---
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print("Handling a background message: ${message.messageId}");
+  developer.log("Handling a background message: ${message.messageId}", name: 'FCM');
+  developer.log("Handling a background message: ${message.messageId}", name: 'FCM');
 }
 
 void main() async {
@@ -94,16 +95,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      developer.log('Got a message whilst in the foreground!', name: 'FCM');
+      developer.log('Message data: ${message.data}', name: 'FCM');
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification!.title}: ${message.notification!.body}');
+        developer.log('Message also contained a notification: ${message.notification!.title}: ${message.notification!.body}', name: 'FCM');
       }
       _handleNotificationMessage(message);
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('A new onMessageOpenedApp event was published!');
+      developer.log('A new onMessageOpenedApp event was published!', name: 'FCM');
       _handleNotificationMessage(message);
     });
   }
@@ -111,28 +112,31 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // Helper to get FCM token and save it to current user's preferences
   Future<void> _updateFcmTokenForCurrentUser(UserPreferences userPrefs) async {
     if (userPrefs.uid == null) {
-      print("Warning: UserPreferences UID is null. Cannot update FCM token.");
+      developer.log("Warning: UserPreferences UID is null. Cannot update FCM token.", name: 'FCM');
       return;
     }
 
     String? token = await FirebaseMessaging.instance.getToken();
-    print("FCM Token for user ${userPrefs.uid}: $token");
+    developer.log("FCM Token for user ${userPrefs.uid}: $token", name: 'FCM');
 
     if (token != null) {
       await userPrefs.updateFcmToken(token);
       _fcmTokenRefreshSubscription?.cancel();
       _fcmTokenRefreshSubscription = FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        print("FCM Token Refreshed for user ${userPrefs.uid}: $newToken");
+        developer.log("FCM Token Refreshed for user ${userPrefs.uid}: $newToken", name: 'FCM');
         userPrefs.updateFcmToken(newToken);
       });
     } else {
-      print("FCM Token is null. Cannot save to preferences.");
+      developer.log("FCM Token is null. Cannot save to preferences.", name: 'FCM');
     }
   }
 
   // Placeholder for handling incoming notification messages
   void _handleNotificationMessage(RemoteMessage message) {
-    print('Handling incoming notification: ${message.notification?.title ?? "No Title"}');
+    developer.log(
+      'Handling incoming notification: ${message.notification?.title ?? "No Title"}',
+      name: 'FCM',
+    );
   }
 
   void _listenToAuthChanges() {
@@ -152,7 +156,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           }
         } else { // User is signed in (no email verification check needed for social logins)
-          print("User signed in: ${user.email ?? user.displayName}");
+          developer.log("User signed in: ${user.email ?? user.displayName}", name: 'Auth');
 
           await userPreferences.loadUserDetails(user.uid);
 

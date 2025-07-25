@@ -3,15 +3,10 @@ import 'package:housingapp/models/property.dart';
 
 class MatchingAlgorithm {
   /// Calculates a match score (0-100) between user preferences and a property.
-  /// This version includes more sophisticated logic and weighting.
   static double calculateMatchScore(UserPreferences preferences, Property property) {
     double score = 0;
     int maxPossibleScore = 0; // This will dynamically build based on preferences
-
     // --- Core Match (High Weight - Always considered) ---
-
-    // Housing Type (Should already be filtered by DiscoverListingsScreen,
-    // but contributes to score if it matches the preference for completeness)
     if (preferences.housingType == property.type) {
       score += 30;
     }
@@ -42,7 +37,7 @@ class MatchingAlgorithm {
 
     // Bedrooms (General preference: property must have at least the preferred number)
     if (preferences.bedrooms != null) {
-      maxPossibleScore += 15; // NEW: Added weight for bedrooms
+      maxPossibleScore += 15; // Added weight for bedrooms
       if (property.bedrooms >= preferences.bedrooms!) {
         score += 15;
       }
@@ -86,16 +81,7 @@ class MatchingAlgorithm {
       }
 
     } else if (preferences.housingType == 'airbnb') {
-      // REMOVED: Guests Capacity (No longer considered)
-      // if (preferences.guests != null) {
-      //   maxPossibleScore += 20;
-      //   if (property.maxGuests != null && preferences.guests! <= property.maxGuests!) {
-      //     score += 20;
-      //   }
-      // }
-
       // Amenities Match
-      // CORRECTED: Changed preferences.airbnbAmenities to preferences.amenities
       if (preferences.airbnbAmenities.isNotEmpty) {
         int preferredAmenitiesCount = preferences.airbnbAmenities.values.where((v) => v).length;
         if (preferredAmenitiesCount > 0) {

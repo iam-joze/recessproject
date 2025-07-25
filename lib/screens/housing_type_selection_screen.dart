@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:housingapp/widgets/custom_button.dart';
-import 'package:housingapp/models/user_preferences.dart'; // Import UserPreferences
+import 'package:housingapp/models/user_preferences.dart'; 
 import 'package:provider/provider.dart';
 import 'package:housingapp/screens/notifications_screen.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
 import 'package:housingapp/screens/discover_listings_screen.dart';
-import 'package:housingapp/screens/saved_properties_screen.dart'; // Import saved properties screen
+import 'package:housingapp/screens/saved_properties_screen.dart'; 
 
 class HousingTypeSelectionScreen extends StatefulWidget {
-  const HousingTypeSelectionScreen({Key? key}) : super(key: key);
+  const HousingTypeSelectionScreen({super.key});
 
   @override
   State<HousingTypeSelectionScreen> createState() => _HousingTypeSelectionScreenState();

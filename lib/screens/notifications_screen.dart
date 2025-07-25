@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
@@ -80,7 +82,7 @@ class NotificationsScreen extends StatelessWidget {
                   );
                 },
                 child: Card(
-                  color: notification.isRead ? Colors.white : AppStyles.lightGrey.withOpacity(0.3),
+                  color: notification.isRead ? Colors.white : AppStyles.lightGrey.withAlpha((0.3 * 255).toInt()),
                   margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   child: ListTile(
                     leading: Icon(
@@ -103,7 +105,6 @@ class NotificationsScreen extends StatelessWidget {
                     ),
                     onTap: () {
                       notificationService.markAsRead(notification.id);
-                      // TODO: Navigate to relevant screen based on notification type in future
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Read: ${notification.title}')),
                       );

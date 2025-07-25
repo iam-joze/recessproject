@@ -1,4 +1,6 @@
 // lib/widgets/filter_modal.dart
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:housingapp/widgets/custom_button.dart';
@@ -27,7 +29,7 @@ class FilterModal extends StatefulWidget {
   final double? initialRadiusKm;
 
   const FilterModal({
-    Key? key,
+    super.key,
     required this.housingType,
     this.initialLocation,
     this.initialMinBudget,
@@ -44,7 +46,7 @@ class FilterModal extends StatefulWidget {
     this.initialReferenceLatitude,
     this.initialReferenceLongitude,
     this.initialRadiusKm,
-  }) : super(key: key);
+  });
 
   @override
   State<FilterModal> createState() => _FilterModalState();
@@ -149,23 +151,25 @@ class _FilterModalState extends State<FilterModal> {
     }
 
     // Only proceed if no geocoding error or no reference location was provided (or geocoding succeeded)
-    Navigator.pop(context, {
-      'location': _locationController.text.isNotEmpty ? _locationController.text : null,
-      'minBudget': double.tryParse(_minBudgetController.text),
-      'maxBudget': double.tryParse(_maxBudgetController.text),
-      'bedrooms': _bedrooms,
-      'bathrooms': _bathrooms,
-      'permanentHouseType': _houseType,
-      'selfContained': _selfContained,
-      'fenced': _fenced,
-      // REMOVED: 'maxGuests': _maxGuests,
-      'amenities': _amenities,
-      // NEW: Proximity filter results
-      'referenceLocationText': refLocationText.isNotEmpty ? refLocationText : null,
-      'referenceLatitude': finalGeocodedLat,
-      'referenceLongitude': finalGeocodedLon,
-      'radiusKm': _radiusKm,
-    });
+    if (mounted) {
+      Navigator.pop(context, {
+        'location': _locationController.text.isNotEmpty ? _locationController.text : null,
+        'minBudget': double.tryParse(_minBudgetController.text),
+        'maxBudget': double.tryParse(_maxBudgetController.text),
+        'bedrooms': _bedrooms,
+        'bathrooms': _bathrooms,
+        'permanentHouseType': _houseType,
+        'selfContained': _selfContained,
+        'fenced': _fenced,
+        // REMOVED: 'maxGuests': _maxGuests,
+        'amenities': _amenities,
+        // NEW: Proximity filter results
+        'referenceLocationText': refLocationText.isNotEmpty ? refLocationText : null,
+        'referenceLatitude': finalGeocodedLat,
+        'referenceLongitude': finalGeocodedLon,
+        'radiusKm': _radiusKm,
+      });
+    }
   }
 
   void _resetFilters() {
@@ -381,8 +385,8 @@ class _FilterModalState extends State<FilterModal> {
                         _selfContained = value;
                       });
                     },
-                    fillColor: MaterialStateProperty.resolveWith((states) {
-                      if (states.contains(MaterialState.selected)) {
+                    fillColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
                         return AppStyles.primaryColor;
                       }
                       return null;
@@ -400,8 +404,8 @@ class _FilterModalState extends State<FilterModal> {
                         _fenced = value;
                       });
                     },
-                    fillColor: MaterialStateProperty.resolveWith((states) {
-                      if (states.contains(MaterialState.selected)) {
+                    fillColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
                         return AppStyles.primaryColor;
                       }
                       return null;
@@ -428,7 +432,7 @@ class _FilterModalState extends State<FilterModal> {
                         _amenities[amenity] = selected;
                       });
                     },
-                    selectedColor: AppStyles.primaryColor.withOpacity(0.7),
+                    selectedColor: AppStyles.primaryColor.withAlpha((0.7 * 255).round()),
                     checkmarkColor: Colors.white,
                     labelStyle: TextStyle(
                       color: (_amenities[amenity] ?? false) ? Colors.white : AppStyles.textColor,

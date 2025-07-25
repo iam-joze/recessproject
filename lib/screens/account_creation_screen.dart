@@ -9,10 +9,9 @@ import 'package:housingapp/widgets/custom_button.dart';
 import 'package:housingapp/screens/housing_type_selection_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/user_preferences.dart';
+import 'package:logging/logging.dart';
 import 'dart:math'; // Import for Random number generation
 
-// --- REMOVED: ArtisticHousePainter class (as it's no longer needed) ---
-// The CustomPainter class that drew the "big house" has been removed entirely.
 
 class AccountCreationScreen extends StatefulWidget {
   const AccountCreationScreen({super.key});
@@ -84,7 +83,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       final User? user = userCredential.user;
 
       if (user != null) {
-        print('Successfully signed in with Google: ${user.displayName ?? user.email}');
+        Logger('AccountCreationScreen').info('Successfully signed in with Google: ${user.displayName ?? user.email}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Welcome, ${user.displayName ?? user.email}!')),
@@ -119,14 +118,14 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           SnackBar(content: Text(message)),
         );
       }
-      print("Firebase Auth Error during Google Sign-In: ${e.code} - ${e.message}");
+      Logger('AccountCreationScreen').warning("Firebase Auth Error during Google Sign-In: ${e.code} - ${e.message}");
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An unexpected error occurred during Google Sign-In: $e')),
         );
       }
-      print("General Error during Google Sign-In: $e");
+      Logger('AccountCreationScreen').severe("General Error during Google Sign-In: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -152,7 +151,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
         final User? user = userCredential.user;
 
         if (user != null) {
-          print('Successfully signed in with Facebook: ${user.displayName ?? user.email}');
+          Logger('AccountCreationScreen').info('Successfully signed in with Facebook: ${user.displayName ?? user.email}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Welcome, ${user.displayName ?? user.email}!')),
@@ -185,7 +184,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
             SnackBar(content: Text('Facebook Sign-In failed: ${result.message}')),
           );
         }
-        print("Facebook Login Status: ${result.status} - Message: ${result.message}");
+        Logger('AccountCreationScreen').warning("Facebook Login Status: ${result.status} - Message: ${result.message}");
       }
     } on FirebaseAuthException catch (e) {
       String message;
@@ -201,14 +200,14 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           SnackBar(content: Text(message)),
         );
       }
-      print("Firebase Auth Error during Facebook Sign-In: ${e.code} - ${e.message}");
+      Logger('AccountCreationScreen').warning("Firebase Auth Error during Facebook Sign-In: ${e.code} - ${e.message}");
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An unexpected error occurred during Facebook Sign-In: $e')),
         );
       }
-      print("General Error during Facebook Sign-In: $e");
+      Logger('AccountCreationScreen').severe("General Error during Facebook Sign-In: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -244,7 +243,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
             child: Transform.rotate(
               angle: -0.2, // Slight rotation for artistic feel
               child: Opacity(
-                opacity: 0.08, // Subtle but visible presence
+                opacity: 0.1, // Subtle but visible presence
                 child: Container(
                   width: MediaQuery.of(context).size.width * 1.2, // Very wide to cover a large area
                   height: MediaQuery.of(context).size.height * 0.4, // Significant height
@@ -266,7 +265,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.05), // Subtle green
+                color: Colors.green.withAlpha((0.05 * 255).round()), // Subtle green
                 shape: BoxShape.circle,
               ),
             ),
@@ -279,7 +278,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.03), // Subtle black
+                color: Colors.black.withAlpha((0.03 * 255).round()), // Subtle black
                 shape: BoxShape.circle,
               ),
             ),
@@ -289,7 +288,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           // Loop to add multiple random house icons
           ...List.generate(8, (index) { // Generate 8 random icons for more distribution
             final double iconSize = _randomSize(35.0, 70.0); // Slightly larger range for visibility
-            final double opacity = _random.nextDouble() * 0.05 + 0.03; // **Increased opacity range (0.03 to 0.08)**
+            final double opacity = _random.nextDouble() * 0.1 + 0.05; // **Increased opacity range **
             final IconData selectedIcon = _houseIconTypes[_random.nextInt(_houseIconTypes.length)];
 
             return Positioned(
@@ -302,7 +301,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                   child: Icon(
                     selectedIcon,
                     size: iconSize,
-                    color: Colors.green, // **Explicitly green as requested**
+                    color: Colors.green, 
                   ),
                 ),
               ),

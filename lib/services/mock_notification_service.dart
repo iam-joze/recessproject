@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/foundation.dart';
 import 'package:housingapp/models/notification_item.dart';
 import 'package:uuid/uuid.dart'; // For unique IDs
