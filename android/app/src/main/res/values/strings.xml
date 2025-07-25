@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HousingApp</string>
+    <string name="facebook_app_id">1033375628593313</string>
+    <string name="facebook_app_namespace">fb1033375628593313</string>
+    <string name="facebook_client_token">96f5eb8e5661f4fa5957c53f51756b41</string>
+</resources>

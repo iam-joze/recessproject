@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Often needed for UI-related stuff, even in models
+//import 'package:flutter/material.dart'; // Often needed for UI-related stuff, even in models
 import 'package:cloud_firestore/cloud_firestore.dart'; // ADD THIS IMPORT
 
 class Property {
