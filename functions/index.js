@@ -1,5 +1,5 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require("firebase_functions");
+const admin = require("firebase_admin");
 
 // Initialize Firebase Admin SDK
 // This allows your Cloud Function to interact with other Firebase services

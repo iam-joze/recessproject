@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
-import 'package:housingapp/models/notification_item.dart';
+//import 'package:housingapp/models/notification_item.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
+  const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

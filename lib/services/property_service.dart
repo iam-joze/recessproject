@@ -1,9 +1,10 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:housingapp/models/property.dart';
 import 'package:housingapp/models/user_preferences.dart'; // To use user preferences for filtering
 
 class PropertyService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Collection reference for properties
   final CollectionReference _propertiesCollection =
@@ -103,9 +104,9 @@ class PropertyService {
       } else {
         await _propertiesCollection.doc(property.id).set(property.toFirestore());
       }
-      print('Property added/updated successfully: ${property.title}');
+      //print('Property added/updated successfully: ${property.title}');
     } catch (e) {
-      print('Error adding property: $e');
+      //print('Error adding property: $e');
       rethrow;
     }
   }

@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.1
+  sdk: ">=2.17.0 <3.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -57,9 +57,11 @@ dev_dependencies:
   firebase_auth: ^5.7.0
   cloud_firestore: ^5.6.12
   firebase_messaging: ^15.2.10
-  firebase-admin: ^9.0.0 # For Firebase Admin SDK
-  firebase-functions: ^4.0.0 # For Firebase Functions
+  #firebase_admin: any # For Firebase Admin SDK
+  cloud_functions: ^5.1.1 # For Cloud Functions
   #provider: ^6.1.5
+  google_sign_in: ^6.1.0 # For Google Sign-In
+  flutter_facebook_auth: ^7.1.2 # For Facebook Sign-In
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

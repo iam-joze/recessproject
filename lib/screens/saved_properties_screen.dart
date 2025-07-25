@@ -7,7 +7,7 @@ import 'package:housingapp/widgets/listing_card.dart';
 import 'package:housingapp/screens/property_detail_screen.dart'; // To navigate to detail view
 
 class SavedPropertiesScreen extends StatefulWidget {
-  const SavedPropertiesScreen({Key? key}) : super(key: key);
+  const SavedPropertiesScreen({super.key});
 
   @override
   State<SavedPropertiesScreen> createState() => _SavedPropertiesScreenState();
