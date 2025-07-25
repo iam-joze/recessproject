@@ -10,7 +10,7 @@ import 'package:housingapp/screens/property_detail_screen.dart';
 import 'package:housingapp/widgets/filter_modal.dart';
 
 class DiscoverListingsScreen extends StatefulWidget {
-  const DiscoverListingsScreen({Key? key}) : super(key: key);
+  const DiscoverListingsScreen({super.key});
 
   @override
   State<DiscoverListingsScreen> createState() => _DiscoverListingsScreenState();
@@ -19,7 +19,7 @@ class DiscoverListingsScreen extends StatefulWidget {
 class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
   List<Property> _displayedProperties = [];
 
-  // These will store the filters applied from the new filter modal
+  // These will store the filters applied from the filter modal
   String? _appliedLocationFilter;
   double? _appliedMinBudget;
   double? _appliedMaxBudget;
@@ -28,10 +28,9 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
   bool? _appliedFenced;
   int? _appliedBedrooms;
   int? _appliedBathrooms;
-  // REMOVED: int? _appliedMaxGuests;
   Map<String, bool> _appliedAmenities = {};
 
-  // NEW: State variables for the proximity filter
+  // State variables for the proximity filter
   String? _appliedReferenceLocationText;
   double? _appliedReferenceLatitude;
   double? _appliedReferenceLongitude;
@@ -46,7 +45,7 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
     _loadAndFilterProperties();
   }
 
-  // Consolidated method to load, filter, and score properties
+  // Method to load, filter, and score properties
   Future<void> _loadAndFilterProperties() async {
     final userPreferences = Provider.of<UserPreferences>(context, listen: false);
     List<Property> allProperties = MockPropertyService.getMockProperties();
@@ -67,7 +66,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
         (_appliedHouseType != null && _appliedHouseType!.isNotEmpty) ||
         _appliedSelfContained != null ||
         _appliedFenced != null ||
-        // REMOVED: _appliedMaxGuests != null ||
         _appliedAmenities.isNotEmpty;
 
     // --- DYNAMIC FILTERING (from filter modal - now using "at least 2" logic) ---
@@ -133,11 +131,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
             matchedFilterCount++;
           }
         } else if (userPreferences.housingType == 'airbnb') {
-          // REMOVED: Max Guests filter
-          // if (_appliedMaxGuests != null && property.maxGuests != null &&
-          //     property.maxGuests! >= _appliedMaxGuests!) {
-          //   matchedFilterCount++;
-          // }
           // Amenities filter (counts as 1 match if property has ANY of the selected amenities)
           if (_appliedAmenities.isNotEmpty) {
             bool anySelectedAmenityPresentInProperty = false;
@@ -168,7 +161,7 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
     // currentFilteredProperties remains filtered only by housingType at this point.
 
 
-    // NEW: --- PROXIMITY FILTERING (remains an "AND" condition and is applied after dynamic filters) ---
+    // PROXIMITY FILTERING (remains an "AND" condition and is applied after dynamic filters) ---
     if (_appliedReferenceLatitude != null && _appliedReferenceLongitude != null && _appliedRadiusKm != null) {
       List<Property> proximityFiltered = [];
       for (var property in currentFilteredProperties) {
@@ -190,7 +183,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
         currentFilteredProperties[i] = currentFilteredProperties[i].copyWith(distanceKm: null);
       }
     }
-
 
     // --- MATCHING SCORE CALCULATION & SORTING ---
     List<Property> propertiesToScoreOrNullify = [];
@@ -231,7 +223,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
             initialPermanentHouseType: _appliedHouseType,
             initialSelfContained: _appliedSelfContained,
             initialFenced: _appliedFenced,
-            // REMOVED: initialMaxGuests: _appliedMaxGuests,
             initialAmenities: _appliedAmenities,
             // NEW: Pass current proximity filter values to the modal
             initialReferenceLocationText: _appliedReferenceLocationText,
@@ -275,7 +266,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
       if (userPreferences.housingType == 'permanent') {
         userPreferences.updateHouseType(_appliedHouseType);
         userPreferences.updateRentalDetails(selfContained: null, fenced: null);
-        // MODIFIED: Removed 'guests: null'
         userPreferences.updateAirbnbDetails(amenities: {});
       } else if (userPreferences.housingType == 'rental') {
         userPreferences.updateRentalDetails(
@@ -283,10 +273,8 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
           fenced: _appliedFenced,
         );
         userPreferences.updateHouseType(null);
-        // MODIFIED: Removed 'guests: null'
         userPreferences.updateAirbnbDetails(amenities: {});
       } else if (userPreferences.housingType == 'airbnb') {
-        // MODIFIED: Removed 'guests: _appliedMaxGuests'
         userPreferences.updateAirbnbDetails(
           amenities: _appliedAmenities,
         );
@@ -329,9 +317,7 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
                 _appliedHouseType = null;
                 _appliedSelfContained = null;
                 _appliedFenced = null;
-                // REMOVED: _appliedMaxGuests = null;
                 _appliedAmenities = {};
-                
                 // NEW: Reset proximity filter state variables
                 _appliedReferenceLocationText = null;
                 _appliedReferenceLatitude = null;
@@ -346,7 +332,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
               userPreferences.updateBathrooms(null);
               userPreferences.updateHouseType(null);
               userPreferences.updateRentalDetails(selfContained: null, fenced: null);
-              // MODIFIED: Removed 'guests: null'
               userPreferences.updateAirbnbDetails(amenities: {});
 
               _loadAndFilterProperties();

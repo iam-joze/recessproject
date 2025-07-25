@@ -10,13 +10,13 @@ class CustomButton extends StatelessWidget {
   final Widget? leadingIcon; // NEW: Optional widget for a leading icon/logo
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.color,
     this.textColor,
     this.leadingIcon, // NEW: Include in constructor
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

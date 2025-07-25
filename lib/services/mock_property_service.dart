@@ -67,7 +67,7 @@ class MockPropertyService {
 
     String imageUrl = 'https://picsum.photos/id/$imageId/800/600';
     String title = _generateRandomTitle(type, location, bedrooms);
-    String description = 'A beautiful ${type} property located in ${location}. Spacious and modern with great amenities.';
+    String description = 'A beautiful $type property located in $location. Spacious and modern with great amenities.';
 
     // Type-specific details
     String? houseType;

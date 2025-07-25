@@ -2,6 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:logging/logging.dart';
 //import 'package:housingapp/models/property.dart';
 
 class UserPreferences with ChangeNotifier {
@@ -28,7 +29,6 @@ class UserPreferences with ChangeNotifier {
 
   String? _fcmToken;
 
-  // ADD THIS EXPLICIT DEFAULT CONSTRUCTOR
   UserPreferences(); // This allows UserPreferences() to be called.
 
   // --- Getters ---
@@ -76,8 +76,7 @@ class UserPreferences with ChangeNotifier {
     SnapshotOptions? options,
   ) {
     final data = snapshot.data();
-    final prefs = UserPreferences(); // This line will now correctly call the explicit default constructor
-
+    final prefs = UserPreferences(); 
     prefs._uid = snapshot.id;
     prefs._name = data?['name'] as String?;
     prefs._email = data?['email'] as String?;
@@ -105,7 +104,7 @@ class UserPreferences with ChangeNotifier {
 
   Future<void> updateUserDetails({String? uid, required String name, required String email}) async {
     if (uid == null) {
-      print("Error: UID is required to save user details to Firestore.");
+      Logger('UserPreferences').severe("Error: UID is required to save user details to Firestore.");
       return;
     }
     _uid = uid;
@@ -124,7 +123,7 @@ class UserPreferences with ChangeNotifier {
 
   Future<void> updateFcmToken(String? token) async {
     if (_uid == null) {
-      print("Error: UID is required to update FCM token.");
+      Logger('UserPreferences').severe("Error: UID is required to update FCM token.");
       return;
     }
     if (_fcmToken == token) {
@@ -140,7 +139,7 @@ class UserPreferences with ChangeNotifier {
     }, SetOptions(merge: true));
 
     notifyListeners();
-    print("FCM Token updated and saved for user $_uid");
+    Logger('UserPreferences').info("FCM Token updated and saved for user $_uid");
   }
 
   Future<void> loadUserDetails(String uid) async {
@@ -172,7 +171,7 @@ class UserPreferences with ChangeNotifier {
         }
       }
     } else {
-      print("User preferences document for $uid does not exist in Firestore.");
+      Logger('UserPreferences').warning("User preferences document for $uid does not exist in Firestore.");
     }
     notifyListeners();
   }
@@ -294,7 +293,7 @@ class UserPreferences with ChangeNotifier {
         'lastUpdated': FieldValue.serverTimestamp(),
       });
       notifyListeners();
-      print('Property $propertyId saved!');
+      Logger('UserPreferences').info('Property $propertyId saved!');
     }
   }
 
@@ -306,7 +305,7 @@ class UserPreferences with ChangeNotifier {
         'lastUpdated': FieldValue.serverTimestamp(),
       });
       notifyListeners();
-      print('Property $propertyId unsaved!');
+      Logger('UserPreferences').info('Property $propertyId unsaved!');
     }
   }
 

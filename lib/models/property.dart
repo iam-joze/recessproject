@@ -1,5 +1,7 @@
 //import 'package:flutter/material.dart'; // Often needed for UI-related stuff, even in models
-import 'package:cloud_firestore/cloud_firestore.dart'; // ADD THIS IMPORT
+// ignore_for_file: depend_on_referenced_packages
+
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 
 class Property {
   final String id;
@@ -73,8 +75,6 @@ class Property {
       if (availableDates != null && availableDates!.isNotEmpty)
         'availableDates': availableDates!.map((date) => Timestamp.fromDate(date)).toList(),
       if (amenities != null && amenities!.isNotEmpty) 'amenities': amenities,
-      // Note: id, clusterId, matchScore, distanceKm are not stored directly in the document map.
-      // 'id' is the document ID, and the other three are derived values.
     };
   }
 
@@ -109,13 +109,13 @@ class Property {
           ?.map((timestamp) => (timestamp as Timestamp).toDate())
           .toList(),
       amenities: data['amenities'] != null
-          ? Map<String, bool>.from(data['amenities']) // Ensure correct type mapping
+          ? Map<String, bool>.from(data['amenities']) 
           : null,
       // clusterId, matchScore, distanceKm are not loaded from Firestore
     );
   }
 
-  // Helper to update algorithm-related fields (we'll use this later)
+  // Helper to update algorithm-related fields 
   Property copyWith({
     String? id, // Allow updating ID if needed, though typically not for existing properties
     String? type,
