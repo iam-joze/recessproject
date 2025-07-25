@@ -1,15 +1,18 @@
+// lib/screens/account_creation_screen.dart
 // ignore_for_file: depend_on_referenced_packages, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart'; // ADDED: Facebook SDK import
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:housingapp/widgets/custom_button.dart';
-// REMOVED: import 'package:housingapp/widgets/custom_text_field.dart'; // Not needed for social login
-import 'package:housingapp/screens/housing_type_selection_screen.dart'; // Re-add for navigation
-import 'package:provider/provider.dart'; // Re-add for UserPreferences
-import 'package:housingapp/models/user_preferences.dart'; // Re-add for UserPreferences
-// REMOVED: import 'package:housingapp/screens/check_email_screen.dart'; // Not needed for social login
+import 'package:housingapp/screens/housing_type_selection_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:housingapp/models/user_preferences.dart';
+import 'dart:math'; // Import for Random number generation
+
+// --- REMOVED: ArtisticHousePainter class (as it's no longer needed) ---
+// The CustomPainter class that drew the "big house" has been removed entirely.
 
 class AccountCreationScreen extends StatefulWidget {
   const AccountCreationScreen({super.key});
@@ -19,35 +22,49 @@ class AccountCreationScreen extends StatefulWidget {
 }
 
 class _AccountCreationScreenState extends State<AccountCreationScreen> {
-  // REMOVED: final TextEditingController _nameController = TextEditingController();
-  // REMOVED: final TextEditingController _emailController = TextEditingController();
-  // REMOVED: final _formKey = GlobalKey<FormState>(); // Not strictly needed for a single button
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  bool _isLoading = false; // Manages loading state for all social logins
+  bool _isLoading = false;
+
+  final Random _random = Random(); // Initialize Random once
+
+  // List of different house icons to choose from randomly
+  final List<IconData> _houseIconTypes = [
+    Icons.house_outlined,
+    Icons.apartment_outlined,
+    Icons.villa_outlined,
+    Icons.home_work_outlined,
+    Icons.cottage_outlined,
+    Icons.architecture_outlined, // Can represent a building structure
+  ];
+
+  // Helper to generate a random position within screen bounds
+  double _randomX(double screenWidth, {double padding = 10}) =>
+      _random.nextDouble() * (screenWidth - 2 * padding) + padding;
+  double _randomY(double screenHeight, {double padding = 10}) =>
+      _random.nextDouble() * (screenHeight - 2 * padding) + padding;
+
+  // Helper to generate a random rotation angle (in radians)
+  double _randomRotation() => (_random.nextDouble() - 0.5) * 2 * pi * 0.3; // -0.3pi to 0.3pi for varied rotation
+
+  // Helper to generate a random size within a range
+  double _randomSize(double min, double max) => min + (_random.nextDouble() * (max - min));
+
 
   @override
   void dispose() {
-    // REMOVED: _nameController.dispose();
-    // REMOVED: _emailController.dispose();
     super.dispose();
   }
 
-  // REMOVED: _sendSignInLink method is removed entirely.
-
-  // Google Sign-In method (from previous step - remains the same)
   Future<void> _signInWithGoogle() async {
     setState(() {
-      _isLoading = true; // Show loading indicator
+      _isLoading = true;
     });
 
     try {
-      // 1. Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // The user canceled the sign-in process
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Google Sign-In cancelled.')),
@@ -56,16 +73,13 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
         return;
       }
 
-      // 2. Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // 3. Create a new credential with the Google ID token and access token
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 4. Sign in to Firebase with the credential
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
 
@@ -76,15 +90,13 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
             SnackBar(content: Text('Welcome, ${user.displayName ?? user.email}!')),
           );
 
-          // Update UserPreferences with the new user data
           final userPreferences = Provider.of<UserPreferences>(context, listen: false);
           await userPreferences.updateUserDetails(
             uid: user.uid,
-            name: user.displayName ?? user.email!, // Use Google's display name or email
+            name: user.displayName ?? user.email!,
             email: user.email!,
           );
 
-          // Navigate to the main app screen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -124,25 +136,18 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     }
   }
 
-  // NEW METHOD: Handles Facebook Sign-In
   Future<void> _signInWithFacebook() async {
     setState(() {
-      _isLoading = true; // Show loading indicator
+      _isLoading = true;
     });
 
     try {
-      // 1. Trigger the Facebook Sign-In flow
-      // You can specify permissions like: .login(permissions: ['email', 'public_profile'])
       final LoginResult result = await FacebookAuth.instance.login();
 
       if (result.status == LoginStatus.success) {
-        // 2. Obtain the access token
         final AccessToken accessToken = result.accessToken!;
-
-        // 3. Create a new credential with the Facebook access token
         final AuthCredential credential = FacebookAuthProvider.credential(accessToken.tokenString);
 
-        // 4. Sign in to Firebase with the credential
         final UserCredential userCredential = await _auth.signInWithCredential(credential);
         final User? user = userCredential.user;
 
@@ -153,15 +158,13 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
               SnackBar(content: Text('Welcome, ${user.displayName ?? user.email}!')),
             );
 
-            // Update UserPreferences with the new user data
             final userPreferences = Provider.of<UserPreferences>(context, listen: false);
             await userPreferences.updateUserDetails(
               uid: user.uid,
-              name: user.displayName ?? user.email!, // Use Facebook's display name or email
+              name: user.displayName ?? user.email!,
               email: user.email!,
             );
 
-            // Navigate to the main app screen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -177,7 +180,6 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           );
         }
       } else {
-        // LoginStatus.failed or LoginStatus.operationNotAllowed
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Facebook Sign-In failed: ${result.message}')),
@@ -210,7 +212,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false; // Stop loading regardless of success/failure
+          _isLoading = false;
         });
       }
     }
@@ -221,44 +223,150 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
+        backgroundColor: Colors.transparent, // App bar remains transparent
+        elevation: 0, // No shadow
+        foregroundColor: Colors.black, // App bar text/icon color is black on white background
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Sign in to get started!',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              // REMOVED: CustomTextField for name
-              // REMOVED: CustomTextField for email
-              // REMOVED: SizedBox(height: 20)
-
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : Column( // Use a Column to stack the buttons
-                      children: [
-                        CustomButton(
-                          text: 'Sign in with Google',
-                          onPressed: _signInWithGoogle,
-                          // Removed backgroundColor and foregroundColor to avoid conflicts
-                          // and rely on CustomButton's default styling from your theme.
-                        ),
-                        const SizedBox(height: 16), // Spacing between buttons
-                        CustomButton(
-                          text: 'Sign in with Facebook', // New button
-                          onPressed: _signInWithFacebook, // New method call
-                          // Removed backgroundColor and foregroundColor for consistency
-                        ),
-                      ],
-                    ),
-            ],
+      extendBodyBehindAppBar: true, // Extend content behind app bar
+      body: Stack( // Use Stack to layer elements
+        children: [
+          // --- Main Background: Solid White ---
+          Positioned.fill(
+            child: Container(
+              color: Colors.white, // Solid white background
+            ),
           ),
-        ),
+
+          // --- Oversized, Abstract Dark Shape (the "icon-like" background art) ---
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.15, // Adjusted top position
+            left: MediaQuery.of(context).size.width * -0.2, // Extends off-screen left
+            child: Transform.rotate(
+              angle: -0.2, // Slight rotation for artistic feel
+              child: Opacity(
+                opacity: 0.08, // Subtle but visible presence
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 1.2, // Very wide to cover a large area
+                  height: MediaQuery.of(context).size.height * 0.4, // Significant height
+                  decoration: BoxDecoration(
+                    color: Colors.black, // Dark black color
+                    borderRadius: BorderRadius.circular(100), // Very rounded for a soft, abstract shape
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // --- Subtle Abstract Accents ---
+          // Small green circle accent
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.1,
+            left: MediaQuery.of(context).size.width * 0.05,
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.05), // Subtle green
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Small black circle accent
+          Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.1,
+            right: MediaQuery.of(context).size.width * 0.05,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.03), // Subtle black
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+
+          // --- Small Random Green House Icons ---
+          // Loop to add multiple random house icons
+          ...List.generate(8, (index) { // Generate 8 random icons for more distribution
+            final double iconSize = _randomSize(35.0, 70.0); // Slightly larger range for visibility
+            final double opacity = _random.nextDouble() * 0.05 + 0.03; // **Increased opacity range (0.03 to 0.08)**
+            final IconData selectedIcon = _houseIconTypes[_random.nextInt(_houseIconTypes.length)];
+
+            return Positioned(
+              top: _randomY(MediaQuery.of(context).size.height, padding: iconSize),
+              left: _randomX(MediaQuery.of(context).size.width, padding: iconSize),
+              child: Transform.rotate(
+                angle: _randomRotation(),
+                child: Opacity(
+                  opacity: opacity,
+                  child: Icon(
+                    selectedIcon,
+                    size: iconSize,
+                    color: Colors.green, // **Explicitly green as requested**
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          // --- Main Content (Text and Buttons) ---
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Welcome Home!',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87, // Dark text for contrast on white
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Sign in to explore housing options.',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.black54, // Dark text for contrast on white
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 48), // Space before buttons
+                  _isLoading
+                      ? const CircularProgressIndicator(color: Colors.green) // Loading indicator is green
+                      : Column(
+                          children: [
+                            CustomButton(
+                              text: 'Sign in with Google',
+                              onPressed: _signInWithGoogle,
+                              color: Colors.white, // White button background
+                              textColor: Colors.black87, // Dark text
+                              leadingIcon: Image.asset(
+                                'assets/images/google_logo.png',
+                                height: 24,
+                                width: 24,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            CustomButton(
+                              text: 'Sign in with Facebook',
+                              onPressed: _signInWithFacebook,
+                              color: const Color(0xFF1877F2), // Facebook's blue
+                              textColor: Colors.white, // White text
+                              leadingIcon: Image.asset(
+                                'assets/images/facebook_logo.png',
+                                height: 24,
+                                width: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
