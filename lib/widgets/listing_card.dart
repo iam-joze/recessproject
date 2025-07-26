@@ -45,7 +45,7 @@ class ListingCard extends StatelessWidget {
             // Property Image
             Hero( // Add Hero animation for smooth transition
               tag: 'propertyImage_${property.id}',
-              child: Image.network(
+              child: Image.asset( // <--- CHANGED FROM Image.network to Image.asset!
                 property.imageUrl,
                 height: 200,
                 width: double.infinity,
@@ -54,7 +54,7 @@ class ListingCard extends StatelessWidget {
                   height: 200,
                   color: AppStyles.lightGrey,
                   child: const Center(
-                    child: Icon(Icons.broken_image, color: AppStyles.darkGrey, size: 50),
+                    child: Icon(Icons.image_not_supported, color: AppStyles.darkGrey, size: 50), // Changed icon for clarity
                   ),
                 ),
               ),
@@ -103,9 +103,16 @@ class ListingCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildFeatureChip(Icons.king_bed, '${property.bedrooms} Beds'),
-                      _buildFeatureChip(Icons.bathtub, '${property.bathrooms} Baths'),
-                      _buildFeatureChip(Icons.square_foot, '${property.areaSqFt} SqFt'),
+                      // Wrapped Text in _buildFeatureChip in Expanded
+                      Flexible( // Use Flexible to allow chips to shrink if space is tight
+                        child: _buildFeatureChip(Icons.king_bed, '${property.bedrooms} Beds'),
+                      ),
+                      Flexible(
+                        child: _buildFeatureChip(Icons.bathtub, '${property.bathrooms} Baths'),
+                      ),
+                      Flexible(
+                        child: _buildFeatureChip(Icons.square_foot, '${property.areaSqFt} SqFt'),
+                      ),
                     ],
                   ),
                   // Optional: Match Score / Distance
@@ -116,14 +123,18 @@ class ListingCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           if (property.matchScore != null)
-                            _buildInfoChip(
-                              label: 'Match: ${property.matchScore!.toInt()}%',
-                              color: AppStyles.accentColor,
+                            Flexible( // Use Flexible to allow chips to shrink if space is tight
+                              child: _buildInfoChip(
+                                label: 'Match: ${property.matchScore!.toInt()}%',
+                                color: AppStyles.accentColor,
+                              ),
                             ),
                           if (property.distanceKm != null)
-                            _buildInfoChip(
-                              label: '${property.distanceKm!.toStringAsFixed(1)} km away',
-                              color: AppStyles.primaryColor.withValues(alpha: (0.8 * 255)),
+                            Flexible( // Use Flexible here too
+                              child: _buildInfoChip(
+                                label: '${property.distanceKm!.toStringAsFixed(1)} km away',
+                                color: AppStyles.primaryColor.withOpacity(0.8),
+                              ),
                             ),
                         ],
                       ),
@@ -139,12 +150,17 @@ class ListingCard extends StatelessWidget {
 
   Widget _buildFeatureChip(IconData icon, String text) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center, // Center content within Flexible
       children: [
         Icon(icon, size: 16, color: AppStyles.darkGrey),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 12, color: AppStyles.darkGrey),
+        Expanded( // Ensures text within the chip expands and clips if needed
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 12, color: AppStyles.darkGrey),
+            overflow: TextOverflow.ellipsis, // Add overflow handling
+            maxLines: 1, // Ensure it only takes one line
+          ),
         ),
       ],
     );
@@ -155,6 +171,8 @@ class ListingCard extends StatelessWidget {
       label: Text(
         label,
         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        overflow: TextOverflow.ellipsis, // Add overflow handling for chip label
+        maxLines: 1,
       ),
       backgroundColor: color,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
