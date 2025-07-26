@@ -69,14 +69,7 @@ class PropertyService {
 
     // Type-specific filters (example for Airbnb)
     if (userPreferences.housingType == 'airbnb') {
-      if (userPreferences.guests != null) {
-        query = query.where('guests', isEqualTo: userPreferences.guests); // Assuming 'guests' is a field in Property now. If not, add it.
-      }
-      // Amenities filtering is more complex. Firestore doesn't support array-contains-any for maps directly.
-      // For simple 'has this amenity', you'd do: query = query.where('amenities.wifi', isEqualTo: true);
-      // For multiple selected amenities, you'd need multiple .where() calls or client-side filtering.
-      // Let's add an example for one amenity, but note this gets tricky for many.
-      // For a robust solution, consider flattening amenities or using array-contains for a list of amenity strings.
+      // REMOVED: guests filter
       userPreferences.airbnbAmenities.forEach((amenityKey, isSelected) {
         if (isSelected) {
           // This creates a query like where('amenities.wifi', isEqualTo: true)
@@ -85,7 +78,7 @@ class PropertyService {
         }
       });
     }
-    
+
     // Order results (optional)
     query = query.orderBy('price', descending: false); // Order by price ascending
 

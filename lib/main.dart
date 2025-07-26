@@ -3,20 +3,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// REMOVED: import 'package:firebase_dynamic_links/firebase_dynamic_links.dart'; // No longer needed for email links
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'dart:developer' as developer;
+
 import 'package:housingapp/models/user_preferences.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
+import 'package:housingapp/services/property_service.dart'; // <--- ADD THIS IMPORT
 import 'package:housingapp/screens/account_creation_screen.dart';
-import 'package:housingapp/screens/housing_type_selection_screen.dart';
+import 'package:housingapp/screens/housing_type_selection_screen.dart'; // Assuming this leads to DiscoverListingsScreen
 import 'package:housingapp/firebase_options.dart';
 
 // --- TOP-LEVEL FUNCTION FOR BACKGROUND MESSAGES (REQUIRED BY FCM) ---
+@pragma('vm:entry-point') // Required for background messages
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform); // Initialize Firebase if not already
   developer.log("Handling a background message: ${message.messageId}", name: 'FCM');
   developer.log("Handling a background message: ${message.messageId}", name: 'FCM');
 }
@@ -27,6 +30,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Ensure Firebase is initialized before setting up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(
@@ -34,6 +38,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => UserPreferences()),
         ChangeNotifierProvider(create: (context) => MockNotificationService()),
+        Provider<PropertyService>(create: (context) => PropertyService()), // <--- ADD THIS LINE
       ],
       child: const MyApp(),
     ),
@@ -48,7 +53,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  // REMOVED: StreamSubscription? _dynamicLinkSubscription; // Not needed as email link auth is removed
   StreamSubscription? _authStateSubscription;
   StreamSubscription? _fcmTokenRefreshSubscription;
 
@@ -56,24 +60,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // REMOVED: _initDynamicLinks(); // Email link specific init removed
     _listenToAuthChanges();
   }
 
   @override
   void dispose() {
-    // REMOVED: _dynamicLinkSubscription?.cancel();
     _authStateSubscription?.cancel();
     _fcmTokenRefreshSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-
-  // REMOVED: _initDynamicLinks method is completely removed as it was only for email links.
-  // If you need dynamic links for OTHER purposes later, we can re-add it
-  // and remove the email link specific logic from within it.
-
-  // REMOVED: _handleDeepLink method is completely removed as it was only for email links.
 
   // Firebase Messaging Initialization remains as is
   Future<void> _initializeFirebaseMessaging() async {
