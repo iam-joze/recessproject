@@ -1,0 +1,23 @@
+/* Import Google Fonts - Patrick Hand (for a playful look) and Inter (for general text) */
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@400;700&display=swap');
+
+/* Custom CSS Variables (optional, but good practice for brand colors) */
+:root {
+    --primary-green: #28a745; /* A standard green, adjust as needed */
+    --dark-green: #1e7e34;
+    --light-gray: #f8f9fa;
+    --text-color: #333333;
+}
+
+/* Apply fonts to body or specific elements */
+body {
+    font-family: 'Inter', sans-serif; /* Default font for most text */
+}
+
+/* Apply the playful font to headings where it makes sense (e.g., your "Welcome Back!" title) */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Patrick Hand', cursive;
+}
+
+/* You can add more custom styles here if Tailwind classes aren't enough for something specific */
+/* For example, if you wanted a specific shadow or animation that's not a direct Tailwind utility */

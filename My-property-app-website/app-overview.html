@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Property App - Overview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-green-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold font-['Patrick_Hand']">Your Property App</a>
+            <nav class="space-x-2 md:space-x-4">
+                <a href="#features" class="px-3 py-2 rounded-md hover:bg-green-600 transition-colors duration-300">Features</a>
+                <a href="#about" class="px-3 py-2 rounded-md hover:bg-green-600 transition-colors duration-300">About</a>
+                <a href="#contact" class="px-3 py-2 rounded-md hover:bg-green-600 transition-colors duration-300">Contact</a>
+                <a href="index.html" class="bg-white text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-300 shadow-md">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4">
+
+        <section class="text-center py-16 bg-gradient-to-r from-green-600 to-green-800 text-white rounded-lg shadow-xl mb-12">
+            <h1 class="text-5xl font-bold mb-4 font-['Patrick_Hand']">Find Your Dream Home in Uganda</h1>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">Discover a vast selection of properties across Uganda, from vibrant city apartments to serene countryside estates. Our app provides a seamless and intuitive experience to browse, filter, and connect with property owners for permanent homes, short-term rentals, and convenient Airbnbs.</p>
+            <a href="index.html" class="bg-white text-green-700 px-8 py-3 rounded-full text-lg font-semibold hover:bg-green-100 transition-colors duration-300 shadow-lg">Get Started Now!</a>
+        </section>
+
+        <section id="features" class="py-12">
+            <h2 class="text-4xl font-bold text-center mb-10 text-green-700 font-['Patrick_Hand']">App Features at a Glance</h2>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-12 bg-white p-6 rounded-lg shadow-md">
+                <div class="md:order-2 flex justify-center"> <img src="img/permanent-listings.png" alt="Property Listings" class="rounded-lg shadow-lg border border-gray-200 w-full md:w-auto h-64 object-cover max-w-sm">
+                </div>
+                <div class="md:order-1">
+                    <h3 class="text-3xl font-bold mb-4 text-green-600 font-['Patrick_Hand']">Extensive Property Listings</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Explore an unparalleled selection of properties tailored to your needs. From luxurious family homes in Kampala's prime neighborhoods to charming, affordable apartments for rent, and idyllic vacation Airbnbs across the country, our platform provides comprehensive listings. Each property comes with a detailed card displaying essential information like price, exact location, number of bedrooms and bathrooms, and overall size, ensuring you have all the facts upfront.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-600">
+                        <li>Thousands of verified property listings updated daily.</li>
+                        <li>High-quality images and virtual tours to give you a true sense of the space.</li>
+                        <li>Categorized listings for easy navigation: Permanent, Rental, and Airbnb.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-12 bg-white p-6 rounded-lg shadow-md">
+                <div class="md:order-1 flex justify-center"> <img src="img/property-details.png" alt="Property Details" class="rounded-lg shadow-lg border border-gray-200 w-full md:w-auto h-64 object-cover max-w-sm">
+                </div>
+                <div class="md:order-2">
+                    <h3 class="text-3xl font-bold mb-4 text-green-600 font-['Patrick_Hand']">Comprehensive Property Details</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Once a property catches your eye, delve deeper into its specifics on our comprehensive details page. This dedicated section provides an exhaustive overview, highlighting key amenities, unique features, and neighborhood insights. You’ll find everything from detailed floor plans to information about nearby schools, hospitals, and transportation links.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-600">
+                        <li>In-depth property descriptions and attribute lists (e.g., parking, security, utilities).</li>
+                        <li>Direct "Contact Landlord" feature for immediate inquiries.</li>
+                        <li>"Save Property" option to revisit your favorites anytime.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-12 bg-white p-6 rounded-lg shadow-md">
+                <div class="md:order-2 flex justify-center"> <img src="img/filter-listings.png" alt="Filter Listings" class="rounded-lg shadow-lg border border-gray-200 w-full md:w-auto h-64 object-cover max-w-sm">
+                </div>
+                <div class="md:order-1">
+                    <h3 class="text-3xl font-bold mb-4 text-green-600 font-['Patrick_Hand']">Intelligent Search & Filters</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Finding your perfect property has never been easier with our advanced search and filtering capabilities. Pinpoint exactly what you're looking for by applying filters such as specific locations (e.g., Kololo, Bugolobi, Entebbe), proximity to a key landmark or address, your desired budget range, and the precise number of bedrooms and bathrooms. Our intuitive interface ensures you spend less time searching and more time finding.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-600">
+                        <li>Flexible search by city, town, or specific neighborhood.</li>
+                        <li>Proximity filter for homes near work, school, or family.</li>
+                        <li>Customizable budget sliders to fit every financial plan.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-12 bg-white p-6 rounded-lg shadow-md">
+                <div class="md:order-1 flex justify-center"> <img src="img/choose-housing-type.png" alt="Choose Housing Type" class="rounded-lg shadow-lg border border-gray-200 w-full md:w-auto h-64 object-cover max-w-sm">
+                </div>
+                <div class="md:order-2">
+                    <h3 class="text-3xl font-bold mb-4 text-green-600 font-['Patrick_Hand']">Personalized Housing Preferences</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Tailor your property search to your exact lifestyle and needs. Whether you're looking for a permanent residence to settle down in, a flexible rental for a few months, or a short-term Airbnb stay for your travels, our app allows you to specify your housing type preference. This ensures that the listings presented to you are always relevant and aligned with your personal goals, making your property journey truly personalized.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-600">
+                        <li>Seamless selection between permanent homes, rentals, and Airbnbs.</li>
+                        <li>Receive recommendations based on your specified housing type.</li>
+                        <li>Focus your search on properties that truly match your intent.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-12 bg-white p-6 rounded-lg shadow-md">
+                <div class="md:order-2 flex flex-col items-center"> <img src="img/contact-sent.png" alt="Contact Sent Confirmation" class="rounded-lg shadow-lg border border-gray-200 mb-4 w-full md:w-auto h-64 object-cover max-w-sm">
+                    <img src="img/saved-properties.png" alt="Saved Properties List" class="rounded-lg shadow-lg border border-gray-200 w-full md:w-auto h-64 object-cover max-w-sm">
+                </div>
+                <div class="md:order-1">
+                    <h3 class="text-3xl font-bold mb-4 text-green-600 font-['Patrick_Hand']">Effortless Communication & Management</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Connecting with property owners and managing your search is streamlined and efficient. Our integrated communication features allow you to send direct inquiries to landlords with instant confirmation, ensuring your messages are received. Furthermore, never lose track of a potential dream home with our intuitive "Saved Properties" section, where you can organize, revisit, and compare your favorite listings at any time.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-600">
+                        <li>Direct, secure messaging with landlords.</li>
+                        <li>Instant notifications for message replies.</li>
+                        <li>Personalized dashboard to manage saved listings and inquiries.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </section>
+
+        <section id="about" class="py-12 bg-green-50 p-8 rounded-lg shadow-md mb-12">
+            <h2 class="text-4xl font-bold text-center mb-6 text-green-700 font-['Patrick_Hand']">About Our Mission</h2>
+            <p class="text-lg text-gray-700 leading-relaxed text-center max-w-3xl mx-auto">
+                Our mission at Your Property App is to redefine the property search experience across Uganda. We are dedicated to connecting individuals and families with their ideal living spaces, whether it's a permanent family home, a flexible rental, or a comfortable Airbnb stay. We achieve this by providing a user-friendly, comprehensive, and highly efficient digital platform that simplifies every step of the property journey. We firmly believe that finding your perfect home should be a straightforward, transparent, and stress-free process, empowering you with the tools and information you need to make informed decisions.
+            </p>
+        </section>
+
+        <section class="text-center py-16 bg-green-700 text-white rounded-lg shadow-xl">
+            <h2 class="text-4xl font-bold mb-4 font-['Patrick_Hand']">Ready to Find Your Home?</h2>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">Join thousands of satisfied users who have successfully found their next property with ease. Experience the future of real estate in Uganda – sign up today and unlock a world of possibilities for your next home or investment.</p>
+            <a href="index.html" class="bg-white text-green-700 px-8 py-3 rounded-full text-lg font-semibold hover:bg-green-100 transition-colors duration-300 shadow-lg">Get Started Today!</a>
+        </section>
+
+    </main>
+
+    <footer id="contact" class="bg-gray-800 text-white py-8 px-4 mt-12">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Your Property App. All rights reserved.</p>
+            <div class="flex justify-center space-x-4 mt-4">
+                <a href="#" class="hover:text-green-400">Privacy Policy</a>
+                <a href="#" class="hover:text-green-400">Terms of Service</a>
+                <a href="#" class="hover:text-green-400">Contact Us</a>
+            </div>
+            <p class="mt-4 text-sm text-gray-500">Built with ❤️ in Uganda</p>
+        </div>
+    </footer>
+
+</body>
+</html>
