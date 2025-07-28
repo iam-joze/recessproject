@@ -19,7 +19,6 @@ class FilterModal extends StatefulWidget {
   final String? initialPermanentHouseType;
   final bool? initialSelfContained;
   final bool? initialFenced;
-  // REMOVED: final int? initialMaxGuests;
   final Map<String, bool> initialAmenities;
 
   // NEW: Initial values for proximity filter
@@ -39,7 +38,6 @@ class FilterModal extends StatefulWidget {
     this.initialPermanentHouseType,
     this.initialSelfContained,
     this.initialFenced,
-    // REMOVED: this.initialMaxGuests,
     this.initialAmenities = const {},
     // NEW
     this.initialReferenceLocationText,
@@ -56,7 +54,7 @@ class _FilterModalState extends State<FilterModal> {
   final TextEditingController _locationController = TextEditingController(); // General location filter
   final TextEditingController _minBudgetController = TextEditingController();
   final TextEditingController _maxBudgetController = TextEditingController();
-  
+
   // NEW: Proximity filter controllers and state
   final TextEditingController _referenceLocationController = TextEditingController();
   double? _radiusKm;
@@ -70,11 +68,25 @@ class _FilterModalState extends State<FilterModal> {
   String? _houseType;
   bool? _selfContained;
   bool? _fenced;
-  // REMOVED: int? _maxGuests;
   Map<String, bool> _amenities = {};
 
   final List<String> _houseTypes = ['Bungalow', 'Mansion', 'Apartment', 'Condo', 'Townhouse'];
-  final List<String> _allAmenities = ['WiFi', 'Parking', 'Pool', 'Gym', 'Air Conditioning', 'Kitchen', 'TV'];
+  // UPDATED: Added missing amenities to the list
+  final List<String> _allAmenities = [
+    'WiFi',
+    'Parking',
+    'Pool',
+    'Gym',
+    'Air Conditioning',
+    'Kitchen',
+    'TV',
+    'Hot Water', // Added
+    'Security',   // Added
+    'Dryer',      // Added
+    'Pet-Friendly', // Added
+    'Washer',     // Added
+    'Balcony'     // Added
+  ];
 
   @override
   void initState() {
@@ -87,7 +99,6 @@ class _FilterModalState extends State<FilterModal> {
     _houseType = widget.initialPermanentHouseType;
     _selfContained = widget.initialSelfContained;
     _fenced = widget.initialFenced;
-    // REMOVED: _maxGuests = widget.initialMaxGuests;
     _amenities = Map.from(widget.initialAmenities);
 
     // NEW: Initialize proximity filter state
@@ -161,7 +172,6 @@ class _FilterModalState extends State<FilterModal> {
         'permanentHouseType': _houseType,
         'selfContained': _selfContained,
         'fenced': _fenced,
-        // REMOVED: 'maxGuests': _maxGuests,
         'amenities': _amenities,
         // NEW: Proximity filter results
         'referenceLocationText': refLocationText.isNotEmpty ? refLocationText : null,
@@ -182,7 +192,6 @@ class _FilterModalState extends State<FilterModal> {
       _houseType = null;
       _selfContained = null;
       _fenced = null;
-      // REMOVED: _maxGuests = null;
       _amenities = {};
 
       // NEW: Reset proximity filter
@@ -418,7 +427,6 @@ class _FilterModalState extends State<FilterModal> {
             ],
 
             if (widget.housingType == 'airbnb') ...[
-              // REMOVED: Max Guests section
               Text('Amenities', style: Theme.of(context).textTheme.titleMedium),
               Wrap(
                 spacing: 8.0,
