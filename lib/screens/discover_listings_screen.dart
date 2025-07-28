@@ -9,7 +9,7 @@ import 'package:housingapp/algorithms/haversine_formula.dart';
 import 'package:housingapp/algorithms/matching_algorithm.dart';
 import 'package:housingapp/screens/property_detail_screen.dart';
 import 'package:housingapp/widgets/filter_modal.dart';
-import 'package:housingapp/utils/app_styles.dart';
+//import 'package:housingapp/utils/app_styles.dart';
 
 class DiscoverListingsScreen extends StatefulWidget {
   const DiscoverListingsScreen({super.key});

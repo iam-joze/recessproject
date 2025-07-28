@@ -133,7 +133,7 @@ class ListingCard extends StatelessWidget {
                             Flexible( // Use Flexible here too
                               child: _buildInfoChip(
                                 label: '${property.distanceKm!.toStringAsFixed(1)} km away',
-                                color: AppStyles.primaryColor.withOpacity(0.8),
+                                color: AppStyles.primaryColor.withAlpha((0.8 * 255).toInt()),
                               ),
                             ),
                         ],
