@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/user_preferences.dart';
 import 'package:housingapp/models/property.dart';
-import 'package:housingapp/services/mock_property_service.dart'; 
+import 'package:housingapp/services/property_service.dart'; // Import the PropertyService
+// REMOVE THIS LINE: import 'package:housingapp/services/mock_property_service.dart';
 import 'package:housingapp/widgets/listing_card.dart';
-import 'package:housingapp/screens/property_detail_screen.dart'; 
+import 'package:housingapp/screens/property_detail_screen.dart';
 
 class SavedPropertiesScreen extends StatefulWidget {
   const SavedPropertiesScreen({super.key});
@@ -16,61 +17,68 @@ class SavedPropertiesScreen extends StatefulWidget {
 }
 
 class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
-  List<Property> _savedProperties = [];
+  // Removed _savedProperties state variable as StreamBuilder will handle the list
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedProperties();
-  }
-
-  // Listener to reload properties if saved list changes
-  void _onPreferencesChanged() {
-    _loadSavedProperties();
-  }
-
-  Future<void> _loadSavedProperties() async {
-    final userPreferences = Provider.of<UserPreferences>(context, listen: false);
-    final allMockProperties = MockPropertyService.getMockProperties();
-
-    List<Property> currentSavedProperties = [];
-    for (String id in userPreferences.savedPropertyIds) {
-      final property = allMockProperties.firstWhere(
-        (p) => p.id == id,
-        orElse: () => null!, // Handle case where ID might not be found in mock data
-      );
-      if (property != null) {
-        currentSavedProperties.add(property);
-      }
-    }
-
-    setState(() {
-      _savedProperties = currentSavedProperties;
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Add listener when dependencies change (e.g., Provider is available)
-    Provider.of<UserPreferences>(context, listen: true).addListener(_onPreferencesChanged);
-  }
-
-  @override
-  void dispose() {
-    // Remove listener to prevent memory leaks
-    Provider.of<UserPreferences>(context, listen: false).removeListener(_onPreferencesChanged);
-    super.dispose();
-  }
+  // We no longer need _loadSavedProperties, _onPreferencesChanged,
+  // didChangeDependencies, or dispose for managing the stream.
+  // The StreamBuilder will handle listening for changes to properties from Firestore,
+  // and Provider.of<UserPreferences> (listen: true) in the build method
+  // will react to changes in savedPropertyIds.
 
   @override
   Widget build(BuildContext context) {
+    // Listen to UserPreferences to react to changes in savedPropertyIds
+    final userPreferences = Provider.of<UserPreferences>(context);
+    final propertyService = Provider.of<PropertyService>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Saved Properties'),
       ),
-      body: _savedProperties.isEmpty
-          ? Center(
+      body: StreamBuilder<List<Property>>(
+        stream: propertyService.getPropertiesStream(), // Get ALL properties from Firestore
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error loading properties: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.sentiment_dissatisfied,
+                    size: 80,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'No properties available in the database.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Please check your Firestore setup.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Filter properties based on user's savedPropertyIds
+          final allProperties = snapshot.data!;
+          final List<String> savedIds = userPreferences.savedPropertyIds;
+
+          final filteredSavedProperties = allProperties
+              .where((property) => savedIds.contains(property.id))
+              .toList();
+
+          if (filteredSavedProperties.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -93,12 +101,17 @@ class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              itemCount: _savedProperties.length,
-              itemBuilder: (context, index) {
-                final property = _savedProperties[index];
-                return ListingCard(
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: filteredSavedProperties.length,
+            itemBuilder: (context, index) {
+              final property = filteredSavedProperties[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: ListingCard(
                   property: property,
                   onTap: () {
                     Navigator.push(
@@ -107,9 +120,12 @@ class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
                           builder: (context) => PropertyDetailScreen(property: property)),
                     );
                   },
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

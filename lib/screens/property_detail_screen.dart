@@ -6,7 +6,7 @@ import 'package:housingapp/utils/app_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/user_preferences.dart';
-import 'package:housingapp/widgets/custom_button.dart'; 
+import 'package:housingapp/widgets/custom_button.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
@@ -100,13 +100,13 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
               ),
               background: Hero(
                 tag: 'propertyImage_${widget.property.id}',
-                child: Image.network(
+                child: Image.asset( // <--- CHANGED FROM Image.network to Image.asset!
                   widget.property.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: AppStyles.lightGrey,
                     child: const Center(
-                      child: Icon(Icons.broken_image, color: AppStyles.darkGrey, size: 80),
+                      child: Icon(Icons.image_not_supported, color: AppStyles.darkGrey, size: 80), // Changed icon for clarity
                     ),
                   ),
                 ),
@@ -302,7 +302,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     // The property.availableDates could be used for a more advanced simulation.
     final String checkInDateStr = 'Not selected (select dates for actual booking)';
     final String checkOutDateStr = 'Not selected (select dates for actual booking)';
-    
+
     // Guests could still be a preference, but for this dialog, we can prompt for it
     // or use a default. For now, use a default if not explicitly selected elsewhere.
     // In a real app, this would come from an actual booking form or preferences relevant to booking.
