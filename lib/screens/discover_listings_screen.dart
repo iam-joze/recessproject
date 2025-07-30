@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/property.dart';
 import 'package:housingapp/models/user_preferences.dart';
-import 'package:housingapp/services/property_service.dart';
-// REMOVE THIS IMPORT: import 'package:housingapp/services/mock_property_service.dart';
+// REMOVED: import 'package:housingapp/services/property_service.dart'; // No longer needed for mock data
+import 'package:housingapp/services/mock_property_service.dart'; // ADDED: Import the mock service
 import 'package:housingapp/widgets/listing_card.dart';
 import 'package:housingapp/algorithms/haversine_formula.dart';
 import 'package:housingapp/algorithms/matching_algorithm.dart';
@@ -39,10 +39,32 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
   // State variable to track if filters have been explicitly applied
   bool _filtersApplied = false;
 
+  // NEW: Store all mock properties and currently filtered properties
+  List<Property> _allMockProperties = [];
+  List<Property> _displayedProperties = []; // This list will be updated after filtering/scoring
+
   @override
   void initState() {
     super.initState();
-    // No need to call _loadAndFilterProperties here anymore, StreamBuilder handles initial load.
+    _loadAndProcessProperties(); // Load mock properties on init
+  }
+
+  // NEW: Method to load mock properties and apply initial client-side processing
+  void _loadAndProcessProperties() {
+    // We need userPreferences to apply initial client-side filters and scoring
+    // However, Provider.of can't be called directly in initState.
+    // We'll defer the client-side processing until build, or use a FutureBuilder
+    // for initial load if _loadMockProperties becomes async and independent of context.
+
+    // For simplicity with mock data, let's load all mock data here.
+    // Client-side filtering/scoring will happen in the build method.
+    _allMockProperties = MockPropertyService.getMockProperties();
+
+    // Trigger a rebuild to apply initial filters and scoring based on default preferences
+    // This will happen when build runs and accesses userPreferences via Provider.of
+    setState(() {
+      // Just ensure _allMockProperties is loaded
+    });
   }
 
   // Method to show the filter modal
@@ -87,12 +109,13 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
 
         _appliedReferenceLocationText = appliedFilters['referenceLocationText'];
         _appliedReferenceLatitude = appliedFilters['referenceLatitude'];
-        _appliedReferenceLongitude = appliedFilters['longitude'];
+        _appliedReferenceLongitude = appliedFilters['longitude']; // Corrected to 'longitude' from 'referenceLongitude' assuming key name match
         _appliedRadiusKm = appliedFilters['radiusKm'];
 
         _filtersApplied = true;
       });
 
+      // Update user preferences (if they are meant to persist filters)
       userPreferences.updateLocation(_appliedLocationFilter);
       userPreferences.updateBudgetRange(min: _appliedMinBudget, max: _appliedMaxBudget);
       userPreferences.updateBedrooms(_appliedBedrooms);
@@ -116,6 +139,8 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
         userPreferences.updateHouseType(null);
         userPreferences.updateRentalDetails(selfContained: null, fenced: null);
       }
+      // The `build` method will automatically re-run and call _applyClientSideFiltersAndScore
+      // with the updated state variables and user preferences.
     }
   }
 
@@ -123,85 +148,75 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
   List<Property> _applyClientSideFiltersAndScore(List<Property> properties, UserPreferences userPreferences) {
     List<Property> currentFilteredProperties = List.from(properties);
 
+    // Apply primary property type filter first
+    currentFilteredProperties = currentFilteredProperties.where((property) =>
+      property.type == userPreferences.housingType
+    ).toList();
+
+
     if (_filtersApplied && properties.isNotEmpty) {
       currentFilteredProperties = currentFilteredProperties.where((property) {
-        int matchedFilterCount = 0;
-        bool locationFilterAppliedByUser = (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty);
-        bool propertyMatchesLocationFilter = false;
+        // All filters below must match if explicitly applied
+        bool matchesAllCurrentFilters = true;
 
         // 1. General Location Filter
-        if (locationFilterAppliedByUser) {
-          if (property.location.toLowerCase().contains(_appliedLocationFilter!.toLowerCase())) {
-            matchedFilterCount++;
-            propertyMatchesLocationFilter = true;
+        if (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty) {
+          if (!property.location.toLowerCase().contains(_appliedLocationFilter!.toLowerCase())) {
+            matchesAllCurrentFilters = false;
           }
         }
 
         // 2. Budget Filter
-        if (_appliedMinBudget != null || _appliedMaxBudget != null) {
-            bool budgetMeetsCriteria = true;
-            if (_appliedMinBudget != null && property.price < _appliedMinBudget!) {
-                budgetMeetsCriteria = false;
-            }
-            if (_appliedMaxBudget != null && property.price > _appliedMaxBudget!) {
-                budgetMeetsCriteria = false;
-            }
-            if (budgetMeetsCriteria) {
-                matchedFilterCount++;
-            }
+        if (_appliedMinBudget != null && property.price < _appliedMinBudget!) {
+          matchesAllCurrentFilters = false;
+        }
+        if (_appliedMaxBudget != null && property.price > _appliedMaxBudget!) {
+          matchesAllCurrentFilters = false;
         }
 
         // 3. Bedrooms Filter
-        if (_appliedBedrooms != null) {
-          if (property.bedrooms >= _appliedBedrooms!) {
-            matchedFilterCount++;
-          }
+        if (_appliedBedrooms != null && property.bedrooms < _appliedBedrooms!) {
+          matchesAllCurrentFilters = false;
         }
 
         // 4. Bathrooms Filter
-        if (_appliedBathrooms != null) {
-          if (property.bathrooms >= _appliedBathrooms!) {
-            matchedFilterCount++;
-          }
+        if (_appliedBathrooms != null && property.bathrooms < _appliedBathrooms!) {
+          matchesAllCurrentFilters = false;
         }
 
         // 5. Type-specific dynamic filtering
         if (userPreferences.housingType == 'permanent') {
           if (_appliedHouseType != null && property.houseType != null &&
-              _appliedHouseType!.toLowerCase() == property.houseType!.toLowerCase()) {
-            matchedFilterCount++;
+              _appliedHouseType!.toLowerCase() != property.houseType!.toLowerCase()) {
+            matchesAllCurrentFilters = false;
           }
         } else if (userPreferences.housingType == 'rental') {
           if (_appliedSelfContained != null && property.selfContained != null &&
-              _appliedSelfContained! == property.selfContained!) {
-            matchedFilterCount++;
+              _appliedSelfContained! != property.selfContained!) {
+            matchesAllCurrentFilters = false;
           }
           if (_appliedFenced != null && property.fenced != null &&
-              _appliedFenced! == property.fenced!) {
-            matchedFilterCount++;
+              _appliedFenced! != property.fenced!) {
+            matchesAllCurrentFilters = false;
           }
         } else if (userPreferences.housingType == 'airbnb') {
           if (_appliedAmenities.isNotEmpty) {
-            bool anySelectedAmenityPresentInProperty = false;
+            bool allSelectedAmenitiesPresent = true;
             _appliedAmenities.forEach((amenityKey, isSelected) {
-              if (isSelected && (property.amenities != null && property.amenities![amenityKey] == true)) {
-                anySelectedAmenityPresentInProperty = true;
+              if (isSelected && (property.amenities == null || property.amenities![amenityKey] != true)) {
+                allSelectedAmenitiesPresent = false;
               }
             });
-            if(anySelectedAmenityPresentInProperty) {
-                matchedFilterCount++;
+            if(!allSelectedAmenitiesPresent) {
+              matchesAllCurrentFilters = false;
             }
           }
         }
-
-        if (locationFilterAppliedByUser) {
-          return propertyMatchesLocationFilter && matchedFilterCount >= 2;
-        } else {
-          return matchedFilterCount >= 2;
-        }
+        return matchesAllCurrentFilters;
       }).toList();
     }
 
+    // Proximity Filter (applied after all other filters)
     if (_appliedReferenceLatitude != null && _appliedReferenceLongitude != null && _appliedRadiusKm != null) {
       List<Property> proximityFiltered = [];
       for (var property in currentFilteredProperties) {
@@ -211,38 +226,52 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
           property.latitude,
           property.longitude,
         );
-        Property updatedProperty = property.copyWith(distanceKm: distance);
+        Property updatedProperty = property.copyWith(distanceKm: distance); // Update distanceKm
         if (distance <= _appliedRadiusKm!) {
           proximityFiltered.add(updatedProperty);
         }
       }
       currentFilteredProperties = proximityFiltered;
     } else {
-      for (int i = 0; i < currentFilteredProperties.length; i++) {
-        currentFilteredProperties[i] = currentFilteredProperties[i].copyWith(distanceKm: null);
-      }
+      // If proximity filter is NOT applied, ensure distanceKm is null
+      currentFilteredProperties = currentFilteredProperties.map((property) =>
+          property.copyWith(distanceKm: null)
+      ).toList();
     }
 
-    List<Property> propertiesToScoreOrNullify = [];
+    // Apply Match Score and Sorting (only if filters were applied by user)
+    List<Property> propertiesWithScores = [];
     if (_filtersApplied) {
       for (var property in currentFilteredProperties) {
         double score = MatchingAlgorithm.calculateMatchScore(userPreferences, property);
-        propertiesToScoreOrNullify.add(property.copyWith(matchScore: score));
+        propertiesWithScores.add(property.copyWith(matchScore: score));
       }
-      propertiesToScoreOrNullify.sort((a, b) => (b.matchScore ?? 0).compareTo(a.matchScore ?? 0));
+      // Sort by match score in descending order
+      propertiesWithScores.sort((a, b) => (b.matchScore ?? 0).compareTo(a.matchScore ?? 0));
     } else {
-      for (var property in currentFilteredProperties) {
-        propertiesToScoreOrNullify.add(property.copyWith(matchScore: null));
-      }
+      // If no filters applied, clear match scores
+      propertiesWithScores = currentFilteredProperties.map((property) =>
+          property.copyWith(matchScore: null)
+      ).toList();
     }
 
-    return propertiesToScoreOrNullify;
+    // Sort by price (ascending) if no match score sorting is active
+    // This is a default sort if no other specific sorting (like by match score) is present
+    propertiesWithScores.sort((a, b) => a.price.compareTo(b.price));
+
+
+    return propertiesWithScores;
   }
 
   @override
   Widget build(BuildContext context) {
     final userPreferences = Provider.of<UserPreferences>(context);
-    final propertyService = Provider.of<PropertyService>(context);
+    // REMOVED: final propertyService = Provider.of<PropertyService>(context); // No longer needed
+
+    // Re-apply client-side filters and scoring every time build runs
+    // (e.g., when _appliedFilters or userPreferences change)
+    _displayedProperties = _applyClientSideFiltersAndScore(_allMockProperties, userPreferences);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -256,7 +285,7 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
-                _filtersApplied = false;
+                _filtersApplied = false; // Reset filter state
                 _appliedLocationFilter = null;
                 _appliedMinBudget = null;
                 _appliedMaxBudget = null;
@@ -270,7 +299,10 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
                 _appliedReferenceLatitude = null;
                 _appliedReferenceLongitude = null;
                 _appliedRadiusKm = null;
+                // Reload mock data and re-process it
+                _loadAndProcessProperties();
               });
+              // Also reset user preferences to default if the refresh button is meant for a full reset
               userPreferences.updateLocation(null);
               userPreferences.updateBudgetRange(min: null, max: null);
               userPreferences.updateBedrooms(null);
@@ -280,22 +312,14 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
               userPreferences.updateAirbnbDetails(amenities: {});
             },
           ),
-          // REMOVED: IconButton for favorite_border
         ],
       ),
       body: Column(
         children: [
-          // REMOVED: Padding and Text for "Showing properties for:..."
           Expanded(
-            child: StreamBuilder<List<Property>>(
-              stream: propertyService.getFilteredPropertiesStream(userPreferences),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error loading properties: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
+            // Use a conditional check for _displayedProperties
+            child: _displayedProperties.isEmpty
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -318,65 +342,30 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
                         ),
                       ],
                     ),
-                  );
-                }
-
-                final firebaseProperties = snapshot.data!;
-                final displayedProperties = _applyClientSideFiltersAndScore(firebaseProperties, userPreferences);
-
-                if (displayedProperties.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.sentiment_dissatisfied,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.primary,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: _displayedProperties.length,
+                    itemBuilder: (context, index) {
+                      final property = _displayedProperties[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: ListingCard(
+                          property: property,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PropertyDetailScreen(property: property)),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'No properties found matching your advanced filters.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Try adjusting your filters.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: displayedProperties.length,
-                  itemBuilder: (context, index) {
-                    final property = displayedProperties[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: ListingCard(
-                        property: property,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PropertyDetailScreen(property: property)),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      // REMOVED THE FLOATING ACTION BUTTON
     );
   }
 }
