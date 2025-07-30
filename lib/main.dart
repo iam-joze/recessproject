@@ -11,7 +11,8 @@ import 'dart:developer' as developer;
 import 'package:housingapp/models/user_preferences.dart';
 import 'package:housingapp/utils/app_styles.dart';
 import 'package:housingapp/services/mock_notification_service.dart';
-import 'package:housingapp/services/property_service.dart'; // <--- ADD THIS IMPORT
+// REMOVED: import 'package:housingapp/services/property_service.dart'; // <--- REMOVED THIS IMPORT
+import 'package:housingapp/services/mock_property_service.dart'; // <--- ADDED THIS IMPORT
 import 'package:housingapp/screens/account_creation_screen.dart';
 import 'package:housingapp/screens/housing_type_selection_screen.dart'; // Assuming this leads to DiscoverListingsScreen
 import 'package:housingapp/firebase_options.dart';
@@ -38,7 +39,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => UserPreferences()),
         ChangeNotifierProvider(create: (context) => MockNotificationService()),
-        Provider<PropertyService>(create: (context) => PropertyService()), // <--- ADD THIS LINE
+        // CHANGED: Provide MockPropertyService instead of PropertyService
+        Provider<MockPropertyService>(create: (context) => MockPropertyService()), 
       ],
       child: const MyApp(),
     ),
