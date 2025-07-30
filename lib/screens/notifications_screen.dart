@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
-  @override
+  @over
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
