@@ -224,4 +224,130 @@ class MockPropertyService {
 
     return '$adjective $bedroomsText $prefix $suffix in $location';
   }
+
+  // Haversine formula to calculate distance between two lat/lon points in kilometers
+  static double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371; // Radius of Earth in kilometers
+
+    double latRad1 = _degreesToRadians(lat1);
+    double lonRad1 = _degreesToRadians(lon1);
+    double latRad2 = _degreesToRadians(lat2);
+    double lonRad2 = _degreesToRadians(lon2);
+
+    double dLat = latRad2 - latRad1;
+    double dLon = lonRad2 - lonRad1;
+
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(latRad1) * cos(latRad2) *
+            sin(dLon / 2) * sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return R * c; // Distance in kilometers
+  }
+
+  static double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+
+  // The main method to get properties with applied filters
+  List<Property> getProperties({
+    String? type,
+    String? location,
+    double? minBudget,
+    double? maxBudget,
+    int? bedrooms,
+    int? bathrooms,
+    String? permanentHouseType,
+    bool? selfContained,
+    bool? fenced,
+    Map<String, bool>? amenities,
+    // NEW: Proximity filter parameters
+    double? referenceLatitude,
+    double? referenceLongitude,
+    double? radiusKm,
+  }) {
+    // Start with a copy of all mock properties to avoid modifying the static list directly
+    List<Property> filteredProperties = List.from(_staticProperties);
+
+    // Apply general filters
+    if (type != null && type != 'all') {
+      filteredProperties = filteredProperties.where((p) => p.type == type).toList();
+    }
+    if (location != null && location.isNotEmpty) {
+      filteredProperties = filteredProperties
+          .where((p) => p.location.toLowerCase().contains(location.toLowerCase()))
+          .toList();
+    }
+    if (minBudget != null) {
+      filteredProperties = filteredProperties.where((p) => p.price >= minBudget).toList();
+    }
+    if (maxBudget != null) {
+      filteredProperties = filteredProperties.where((p) => p.price <= maxBudget).toList();
+    }
+    if (bedrooms != null) {
+      filteredProperties = filteredProperties.where((p) => p.bedrooms >= bedrooms).toList();
+    }
+    if (bathrooms != null) {
+      filteredProperties = filteredProperties.where((p) => p.bathrooms >= bathrooms).toList();
+    }
+
+    // Apply type-specific filters
+    if (type == 'permanent' && permanentHouseType != null && permanentHouseType.isNotEmpty) {
+      filteredProperties = filteredProperties.where((p) => p.houseType == permanentHouseType).toList();
+    }
+    if (type == 'rental') {
+      if (selfContained != null) {
+        filteredProperties = filteredProperties.where((p) => p.selfContained == selfContained).toList();
+      }
+      if (fenced != null) {
+        filteredProperties = filteredProperties.where((p) => p.fenced == fenced).toList();
+      }
+    }
+    if (type == 'airbnb' && amenities != null && amenities.isNotEmpty) {
+      amenities.forEach((amenity, isSelected) {
+        if (isSelected) {
+          filteredProperties = filteredProperties
+              .where((p) => p.amenities != null && p.amenities![amenity] == true)
+              .toList();
+        }
+      });
+    }
+
+    // NEW: Apply Proximity Filter
+    if (referenceLatitude != null && referenceLongitude != null && radiusKm != null && radiusKm > 0) {
+      List<Property> proximityFiltered = [];
+      for (var property in filteredProperties) {
+        double distance = _calculateDistance(
+          referenceLatitude,
+          referenceLongitude,
+          property.latitude,
+          property.longitude,
+        );
+        if (distance <= radiusKm) {
+          // Create a new Property object with the calculated distance
+          proximityFiltered.add(property.copyWith(distanceKm: distance));
+        }
+      }
+      filteredProperties = proximityFiltered;
+    } else {
+      // If no proximity filter is applied, ensure distanceKm is null for all properties
+      // This prevents carrying over distance from a previous filter application
+      filteredProperties = filteredProperties.map((p) => p.copyWith(distanceKm: null)).toList();
+    }
+    
+    // Sort properties by distance if a proximity filter was applied, otherwise maintain original order.
+    // Ensure properties with null distanceKm are placed at the end if sorting by distance.
+    if (referenceLatitude != null && referenceLongitude != null && radiusKm != null && radiusKm > 0) {
+      filteredProperties.sort((a, b) {
+        // Handle null cases for distanceKm during sorting
+        if (a.distanceKm == null && b.distanceKm == null) return 0;
+        if (a.distanceKm == null) return 1; // Put properties without distance at the end
+        if (b.distanceKm == null) return -1; // Put properties without distance at the end
+        return a.distanceKm!.compareTo(b.distanceKm!);
+      });
+    }
+
+
+    return filteredProperties;
+  }
 }

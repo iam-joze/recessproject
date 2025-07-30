@@ -8,11 +8,13 @@ import 'package:intl/intl.dart'; // For currency formatting
 class ListingCard extends StatelessWidget {
   final Property property;
   final VoidCallback onTap;
+  final double? distanceKm; // ADDED: Optional distanceKm parameter
 
   const ListingCard({
     super.key,
     required this.property,
     required this.onTap,
+    this.distanceKm, // ADDED: Initialize distanceKm
   });
 
   String _formatPrice(double price, String type) {
@@ -67,9 +69,9 @@ class ListingCard extends StatelessWidget {
                   Text(
                     property.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppStyles.textColor,
-                        ),
+                              fontWeight: FontWeight.bold,
+                              color: AppStyles.textColor,
+                            ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -94,9 +96,9 @@ class ListingCard extends StatelessWidget {
                   Text(
                     _formatPrice(property.price, property.type),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppStyles.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                              color: AppStyles.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                   ),
                   const SizedBox(height: 12),
                   // Basic features row
@@ -111,12 +113,12 @@ class ListingCard extends StatelessWidget {
                         child: _buildFeatureChip(Icons.bathtub, '${property.bathrooms} Baths'),
                       ),
                       Flexible(
-                        child: _buildFeatureChip(Icons.square_foot, '${property.areaSqFt} SqFt'),
+                        child: _buildFeatureChip(Icons.square_foot, '${property.areaSqFt.toStringAsFixed(0)} SqFt'), // Formatted SqFt
                       ),
                     ],
                   ),
                   // Optional: Match Score / Distance
-                  if (property.matchScore != null || property.distanceKm != null)
+                  if (property.matchScore != null || distanceKm != null) // Check distanceKm here
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0),
                       child: Row(
@@ -129,10 +131,10 @@ class ListingCard extends StatelessWidget {
                                 color: AppStyles.accentColor,
                               ),
                             ),
-                          if (property.distanceKm != null)
+                          if (distanceKm != null) // Display distanceKm if available
                             Flexible( // Use Flexible here too
                               child: _buildInfoChip(
-                                label: '${property.distanceKm!.toStringAsFixed(1)} km away',
+                                label: '${distanceKm!.toStringAsFixed(1)} km away', // Formatted distance
                                 color: AppStyles.primaryColor.withAlpha((0.8 * 255).toInt()),
                               ),
                             ),
@@ -170,7 +172,7 @@ class ListingCard extends StatelessWidget {
     return Chip(
       label: Text(
         label,
-        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
         overflow: TextOverflow.ellipsis, // Add overflow handling for chip label
         maxLines: 1,
       ),
