@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:housingapp/models/property.dart';
 import 'package:housingapp/models/user_preferences.dart';
-// REMOVED: import 'package:housingapp/services/property_service.dart'; // No longer needed for mock data
 import 'package:housingapp/services/mock_property_service.dart'; // ADDED: Import the mock service
 import 'package:housingapp/widgets/listing_card.dart';
 import 'package:housingapp/algorithms/haversine_formula.dart';
 import 'package:housingapp/algorithms/matching_algorithm.dart';
 import 'package:housingapp/screens/property_detail_screen.dart';
 import 'package:housingapp/widgets/filter_modal.dart';
-//import 'package:housingapp/utils/app_styles.dart';
+import 'package:intl/intl.dart'; // Import for number formatting
 
 class DiscoverListingsScreen extends StatefulWidget {
   const DiscoverListingsScreen({super.key});
@@ -51,17 +50,9 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
 
   // NEW: Method to load mock properties and apply initial client-side processing
   void _loadAndProcessProperties() {
-    // We need userPreferences to apply initial client-side filters and scoring
-    // However, Provider.of can't be called directly in initState.
-    // We'll defer the client-side processing until build, or use a FutureBuilder
-    // for initial load if _loadMockProperties becomes async and independent of context.
-
-    // For simplicity with mock data, let's load all mock data here.
-    // Client-side filtering/scoring will happen in the build method.
     _allMockProperties = MockPropertyService.getMockProperties();
 
     // Trigger a rebuild to apply initial filters and scoring based on default preferences
-    // This will happen when build runs and accesses userPreferences via Provider.of
     setState(() {
       // Just ensure _allMockProperties is loaded
     });
@@ -109,7 +100,7 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
 
         _appliedReferenceLocationText = appliedFilters['referenceLocationText'];
         _appliedReferenceLatitude = appliedFilters['referenceLatitude'];
-        _appliedReferenceLongitude = appliedFilters['longitude']; // Corrected to 'longitude' from 'referenceLongitude' assuming key name match
+        _appliedReferenceLongitude = appliedFilters['referenceLongitude']; // Corrected key name to 'referenceLongitude'
         _appliedRadiusKm = appliedFilters['radiusKm'];
 
         _filtersApplied = true;
@@ -146,100 +137,27 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
 
   // This method encapsulates the client-side filtering and scoring
   List<Property> _applyClientSideFiltersAndScore(List<Property> properties, UserPreferences userPreferences) {
-    List<Property> currentFilteredProperties = List.from(properties);
+    // Instantiate MockPropertyService to use its filtering logic
+    final mockPropertyService = MockPropertyService();
 
-    // Apply primary property type filter first
-    currentFilteredProperties = currentFilteredProperties.where((property) =>
-      property.type == userPreferences.housingType
-    ).toList();
+    List<Property> currentFilteredProperties = mockPropertyService.getProperties(
+      type: userPreferences.housingType,
+      location: _appliedLocationFilter,
+      minBudget: _appliedMinBudget,
+      maxBudget: _appliedMaxBudget,
+      bedrooms: _appliedBedrooms,
+      bathrooms: _appliedBathrooms,
+      permanentHouseType: _appliedHouseType,
+      selfContained: _appliedSelfContained,
+      fenced: _appliedFenced,
+      amenities: _appliedAmenities,
+      referenceLatitude: _appliedReferenceLatitude,
+      referenceLongitude: _appliedReferenceLongitude,
+      radiusKm: _appliedRadiusKm,
+    );
 
-
-    if (_filtersApplied && properties.isNotEmpty) {
-      currentFilteredProperties = currentFilteredProperties.where((property) {
-        // All filters below must match if explicitly applied
-        bool matchesAllCurrentFilters = true;
-
-        // 1. General Location Filter
-        if (_appliedLocationFilter != null && _appliedLocationFilter!.isNotEmpty) {
-          if (!property.location.toLowerCase().contains(_appliedLocationFilter!.toLowerCase())) {
-            matchesAllCurrentFilters = false;
-          }
-        }
-
-        // 2. Budget Filter
-        if (_appliedMinBudget != null && property.price < _appliedMinBudget!) {
-          matchesAllCurrentFilters = false;
-        }
-        if (_appliedMaxBudget != null && property.price > _appliedMaxBudget!) {
-          matchesAllCurrentFilters = false;
-        }
-
-        // 3. Bedrooms Filter
-        if (_appliedBedrooms != null && property.bedrooms < _appliedBedrooms!) {
-          matchesAllCurrentFilters = false;
-        }
-
-        // 4. Bathrooms Filter
-        if (_appliedBathrooms != null && property.bathrooms < _appliedBathrooms!) {
-          matchesAllCurrentFilters = false;
-        }
-
-        // 5. Type-specific dynamic filtering
-        if (userPreferences.housingType == 'permanent') {
-          if (_appliedHouseType != null && property.houseType != null &&
-              _appliedHouseType!.toLowerCase() != property.houseType!.toLowerCase()) {
-            matchesAllCurrentFilters = false;
-          }
-        } else if (userPreferences.housingType == 'rental') {
-          if (_appliedSelfContained != null && property.selfContained != null &&
-              _appliedSelfContained! != property.selfContained!) {
-            matchesAllCurrentFilters = false;
-          }
-          if (_appliedFenced != null && property.fenced != null &&
-              _appliedFenced! != property.fenced!) {
-            matchesAllCurrentFilters = false;
-          }
-        } else if (userPreferences.housingType == 'airbnb') {
-          if (_appliedAmenities.isNotEmpty) {
-            bool allSelectedAmenitiesPresent = true;
-            _appliedAmenities.forEach((amenityKey, isSelected) {
-              if (isSelected && (property.amenities == null || property.amenities![amenityKey] != true)) {
-                allSelectedAmenitiesPresent = false;
-              }
-            });
-            if(!allSelectedAmenitiesPresent) {
-              matchesAllCurrentFilters = false;
-            }
-          }
-        }
-        return matchesAllCurrentFilters;
-      }).toList();
-    }
-
-    // Proximity Filter (applied after all other filters)
-    if (_appliedReferenceLatitude != null && _appliedReferenceLongitude != null && _appliedRadiusKm != null) {
-      List<Property> proximityFiltered = [];
-      for (var property in currentFilteredProperties) {
-        double distance = HaversineFormula.calculateDistance(
-          _appliedReferenceLatitude!,
-          _appliedReferenceLongitude!,
-          property.latitude,
-          property.longitude,
-        );
-        Property updatedProperty = property.copyWith(distanceKm: distance); // Update distanceKm
-        if (distance <= _appliedRadiusKm!) {
-          proximityFiltered.add(updatedProperty);
-        }
-      }
-      currentFilteredProperties = proximityFiltered;
-    } else {
-      // If proximity filter is NOT applied, ensure distanceKm is null
-      currentFilteredProperties = currentFilteredProperties.map((property) =>
-          property.copyWith(distanceKm: null)
-      ).toList();
-    }
-
-    // Apply Match Score and Sorting (only if filters were applied by user)
+    // After getting the filtered properties from the service,
+    // apply the match score if filters were explicitly applied by the user.
     List<Property> propertiesWithScores = [];
     if (_filtersApplied) {
       for (var property in currentFilteredProperties) {
@@ -255,10 +173,24 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
       ).toList();
     }
 
-    // Sort by price (ascending) if no match score sorting is active
-    // This is a default sort if no other specific sorting (like by match score) is present
-    propertiesWithScores.sort((a, b) => a.price.compareTo(b.price));
-
+    // Secondary sort by price (ascending) if no match score sorting is active
+    // This will act as a tie-breaker or default sort if matchScore is null or equal
+    propertiesWithScores.sort((a, b) {
+      // First, sort by distanceKm if it's available for both and a proximity filter was applied
+      if (_appliedReferenceLatitude != null && _appliedReferenceLongitude != null && _appliedRadiusKm != null && _appliedRadiusKm! > 0) {
+        if (a.distanceKm != null && b.distanceKm != null) {
+          int distanceComparison = a.distanceKm!.compareTo(b.distanceKm!);
+          if (distanceComparison != 0) return distanceComparison;
+        }
+      }
+      // Then, sort by matchScore (descending) if available for both
+      if (a.matchScore != null && b.matchScore != null) {
+        int scoreComparison = b.matchScore!.compareTo(a.matchScore!);
+        if (scoreComparison != 0) return scoreComparison;
+      }
+      // Finally, sort by price (ascending)
+      return a.price.compareTo(b.price);
+    });
 
     return propertiesWithScores;
   }
@@ -266,7 +198,6 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
   @override
   Widget build(BuildContext context) {
     final userPreferences = Provider.of<UserPreferences>(context);
-    // REMOVED: final propertyService = Provider.of<PropertyService>(context); // No longer needed
 
     // Re-apply client-side filters and scoring every time build runs
     // (e.g., when _appliedFilters or userPreferences change)
@@ -352,6 +283,8 @@ class _DiscoverListingsScreenState extends State<DiscoverListingsScreen> {
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: ListingCard(
                           property: property,
+                          // Pass distanceKm to ListingCard if available
+                          distanceKm: property.distanceKm,
                           onTap: () {
                             Navigator.push(
                               context,
